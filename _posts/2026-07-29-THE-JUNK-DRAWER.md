@@ -28,12 +28,8 @@ As I sat in the drive-thru of a local taco joint eagerly awaiting future gastroi
 
 <figure>
   <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Toshiba_Satellite_Pro_400CS_-_frount_%28442351863%29_edit.jpg" alt="An open Toshiba Satellite Pro 400CS laptop from the same mid-1990s series">
-  <figcaption>Toshiba Satellite Pro 400CS. Photo by <a href="https://commons.wikimedia.org/wiki/File:Toshiba_Satellite_Pro_400CS_-_frount_(442351863)_edit.jpg">TehBoris via Wikimedia Commons</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.</figcaption>
+  <figcaption>Our hero of the day: a Toshiba Satellite Pro 400CS. Photo by <a href="https://commons.wikimedia.org/wiki/File:Toshiba_Satellite_Pro_400CS_-_frount_(442351863)_edit.jpg">TehBoris via Wikimedia Commons</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.</figcaption>
 </figure>
-
-
- 
-Our hero of the day
 
 The rest of the story is simple; I retrieved the laptop hard drive, paused to consider the less than stellar noises that emanated from it when gently rotated about its axis, and concluded that it was none of my business. Into the drive adapter, written with the trusty backup image from the HMI, and gently carried like a newborn child over to the gaping maw of industrial automation. Some quick configuration in the system setup was necessary—remember, plug-and-play was an unknown luxury in these days—and the machine shuddered to life and began dutifully displaying the status of the apparatus surrounding us. The client made a noise somewhere between astonishment and a sob and began chanting instructions into the two-way radio rubbing its way through his left coverall strap as the company came back to life. 
 
