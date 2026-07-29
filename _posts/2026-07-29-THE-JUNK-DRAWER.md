@@ -1,7 +1,9 @@
+---
 layout: post
 title: "The Junk Drawer"
 date: 2027-07-29 12:00:00 -0600
 categories: SUCCESSSTORIES
+---
 
 Every tech enthusiast has one; the junk drawer, the tote full of cables, the shelf stacked with long-deprecated laptops. Containers filled with objects that to all sensible laypeople would be considered e-waste but contain the spark of hope in their stewards that maybe, just maybe, that decades-old cable that fits a long deprecated standard will some day have the chance to step in and save the day.
 Recently I had the opportunity to do what I like best: step outside the bounds of the typical office-bound IT solutions and take on a challenge that allowed me to flex muscles not used in decades to solve an outsized problem for a client. Industrial manufacturing is an odd beast in the IT world; esoteric solutions that lay parallel to normal IT practices; entire million-dollar operations and hundreds of thousands of dollars worth of machinery laid down at the feet of a wheezy computer old enough to remember sub-$1 gas prices. A feudal empire built up on a foundation of toothpicks for whom any first-party support has long since ceased to exist, replaced by a knowing nod and an expression somewhere between a grimace and a smirk accompanied with the offer of a six-figure contract to rip and replace the whole empire for lack of a new toothpick.
