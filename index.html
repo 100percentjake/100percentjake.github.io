@@ -1,0 +1,42 @@
+---
+layout: default
+title: Journal
+---
+<section class="intro" aria-labelledby="journal-heading">
+  <p class="eyebrow">The journal of Jake Bickhard</p>
+  <h1 id="journal-heading">Cars, computers, and the interesting stuff in between.</h1>
+  <p>A running collection of projects, unlikely fixes, personal experiences, and ideas that refused to stay in the junk drawer.</p>
+</section>
+
+<section class="post-feed" aria-label="Journal entries">
+  {% if site.posts.size > 0 %}
+    {% for post in site.posts %}
+      <article class="post post-inline">
+        <header class="post-header">
+          <div class="post-number" aria-hidden="true">{{ forloop.index | prepend: '0' | slice: -2, 2 }}</div>
+          <div>
+            <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+            <div class="post-meta">
+              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+              {% assign words = post.content | number_of_words %}
+              <span aria-hidden="true">·</span>
+              <span>{{ words | divided_by: 220 | plus: 1 }} min read</span>
+            </div>
+          </div>
+        </header>
+        <div class="post-content">
+          {{ post.content }}
+        </div>
+        <footer class="post-footer">
+          <a href="{{ post.url | relative_url }}">Permalink →</a>
+        </footer>
+      </article>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <p class="eyebrow">Nothing published yet</p>
+      <h2>The first entry is still on the workbench.</h2>
+      <p>Add a Markdown file to <code>_posts</code> and it will appear here automatically.</p>
+    </div>
+  {% endif %}
+</section>
