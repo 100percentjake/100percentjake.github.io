@@ -26,6 +26,11 @@ The modern concept of “plug and play” didn’t even exist when the software 
 
 As I sat in the drive-thru of a local taco joint eagerly awaiting future gastrointestinal agony I remembered an artifact buried deep in the cobweb filled corners of my basement. There, under a pile of cardboard boxes containing scrapbooks and tchotchkes was a 1995 Toshiba Satellite Pro 400CDT and in it, hopefully, was a solution. A brief fight with Apple Carplay and I had my girlfriend on the phone and was walking through navigating the spider-infested depths to find the laptop, flip it over, remove the battery, and photograph the shockingly accessible hard drive. A 5GB IBM TravelStar.
 
+<figure>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Toshiba_Satellite_Pro_400CS_-_frount_%28442351863%29_edit.jpg" alt="An open Toshiba Satellite Pro 400CS laptop from the same mid-1990s series">
+  <figcaption>Toshiba Satellite Pro 400CS. Photo by <a href="https://commons.wikimedia.org/wiki/File:Toshiba_Satellite_Pro_400CS_-_frount_(442351863)_edit.jpg">TehBoris via Wikimedia Commons</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.</figcaption>
+</figure>
+
 
  
 Our hero of the day
