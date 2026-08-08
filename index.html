@@ -1,41 +1,594 @@
----
-layout: default
-title: Journal
----
-<section class="intro" aria-labelledby="journal-heading">
-  <p class="eyebrow">The journal of Jake Bickhard</p>
-  <p>A running collection of projects, unlikely fixes, personal experiences, and ideas that refused to remain unsaid.</p>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Essays about cars, technology, and whatever else seems interesting.">
+<title>100percentblog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;display=swap" rel="stylesheet">
+<!-- FOUC fix: apply saved theme before first paint -->
+<script>
+  (function(){
+    var saved = localStorage.getItem("theme");
+    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if(saved === "dark" || (!saved && prefersDark)){
+      document.documentElement.setAttribute("data-theme","dark");
+    }
+  })();
+</script>
+<style>
+:root {
+  --bg: #f7f8fa;
+  --text: #222;
+  --card: #fff;
+  --accent: #333;
+  --header-bg: #333;
+  --transition-speed: 0.2s;
+}
 
-<section class="post-feed" aria-label="Journal entries">
-  {% if site.posts.size > 0 %}
-    {% for post in site.posts %}
-      <article class="post post-inline">
-        <header class="post-header">
-          <div class="post-number" aria-hidden="true">{{ forloop.index | prepend: '0' | slice: -2, 2 }}</div>
-          <div>
-            <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
-            <div class="post-meta">
-              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
-              {% assign words = post.content | number_of_words %}
-              <span aria-hidden="true">·</span>
-              <span>{{ words | divided_by: 220 | plus: 1 }} min read</span>
-            </div>
-          </div>
-        </header>
-        <div class="post-content">
-          {{ post.content }}
-        </div>
-        <footer class="post-footer">
-          <a href="{{ post.url | relative_url }}">Permalink →</a>
-        </footer>
-      </article>
-    {% endfor %}
-  {% else %}
-    <div class="empty-state">
-      <p class="eyebrow">Nothing published yet</p>
-      <h2>The first entry is still on the workbench.</h2>
-      <p>Add a Markdown file to <code>_posts</code> and it will appear here automatically.</p>
-    </div>
-  {% endif %}
-</section>
+[data-theme="dark"] {
+  --bg: #121212;
+  --text: #eee;
+  --card: #1e1e1e;
+  --accent: #007585;
+  --header-bg: #0a0a0a;
+}
+
+body {
+  font-family: "Source Serif 4", Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+
+header {
+  width: 100%;
+  background: var(--header-bg);
+  color: #fff;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  position: fixed;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+header img {
+  object-fit: cover;
+  width: 12em;
+  display: block;
+  margin: 0 auto;
+}
+
+.home-link {
+  display: block;
+}
+
+.home-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+.header-img-fallback {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 6rem;
+  gap: 20px;
+  align-items: start;
+}
+
+main {
+  padding: 0 1rem;
+  transition: opacity var(--transition-speed);
+}
+
+article {
+  background: var(--card);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  opacity: 1;
+  transition: opacity var(--transition-speed);
+}
+
+article img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.post-content {
+  max-width: 76ch;
+}
+
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  line-height: 1.25;
+  margin: 2rem 0 0.75rem;
+}
+
+.post-content p {
+  margin: 0 0 1.15rem;
+}
+
+.post-content blockquote {
+  border-left: 4px solid var(--accent);
+  margin: 1.5rem 0;
+  padding: 0.25rem 1rem;
+  opacity: 0.9;
+}
+
+.post-content code {
+  background: rgba(127,127,127,0.14);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+
+.post-content pre {
+  background: rgba(127,127,127,0.14);
+  border-radius: 8px;
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.post-content pre code { background: none; padding: 0; }
+.post-content mark { background: #ffe58a; color: #222; }
+
+.callout {
+  background: rgba(0,117,133,0.09);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  margin: 1.5rem 0;
+  padding: 0.8rem 1rem;
+}
+
+.callout-title { font-weight: 700; margin-bottom: 0.35rem; }
+
+.read-more {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--accent);
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.read-more:hover { text-decoration: underline; }
+
+article h2 a {
+  text-decoration: none;
+  color: var(--accent);
+  transition: color 0.3s;
+}
+
+article h2 a:hover {
+  text-decoration: underline;
+}
+
+/* Sidebar */
+#sidebarContainer {
+  background: var(--card);
+  border-left: 1px solid rgba(0,0,0,0.1);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  border-radius: 12px;
+}
+
+.toggle-theme {
+  cursor: pointer;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+#sidebar {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+/* sidebar items rendered as buttons for a11y */
+#sidebar li {
+  padding: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+#sidebar li button {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.3rem 0;
+  font-size: 1rem;
+  text-align: left;
+  width: 100%;
+  transition: color 0.3s;
+}
+
+#sidebar li button:hover,
+#sidebar li button:focus {
+  color: var(--accent);
+  outline: none;
+}
+
+#sidebar li.active button {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* Footer */
+footer.pagination {
+  width: 100%;
+  background: var(--card);
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+button:disabled {
+  background: #888;
+  cursor: default;
+}
+
+footer small {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Responsive */
+@media(max-width:900px){
+  .container{
+    grid-template-columns: 1fr;
+  }
+  #sidebarContainer{
+    max-height: none;
+    border-left:none;
+    border-top:1px solid rgba(0,0,0,0.1);
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-content">
+    <a class="home-link" id="homeLink" href="#" aria-label="100percentblog home">
+      <img src="logo.png" alt="100percentblog" onerror="this.style.display='none';document.querySelector('.header-img-fallback').style.display='block';">
+    </a>
+    <span class="header-img-fallback" style="display:none">100percentblog</span>
+  </div>
+</header>
+
+<div class="container">
+  <main id="blog"></main>
+
+  <aside id="sidebarContainer">
+    <button class="toggle-theme" id="themeToggle" aria-label="Toggle theme">🌓 Toggle Theme</button>
+    <h3>Recent Posts</h3>
+    <ul id="sidebar"></ul>
+  </aside>
+</div>
+
+<footer class="pagination">
+  <div class="buttons">
+    <button id="prevBtn">Previous</button>
+    <button id="nextBtn">Next</button>
+  </div>
+  <small>© 2025 100percentmedia</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+<script>
+
+const POSTS_PER_PAGE = 2;
+let posts=[], currentPage=1, showingSingle=false;
+
+/* ── Helpers ── */
+
+function slugify(str){return str.toLowerCase().replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'');}
+
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+/* ── Obsidian-compatible Markdown loading ── */
+
+async function loadManifest(){
+  try {
+    const response = await fetch("posts/posts.json");
+    if(!response.ok) throw new Error("Failed to load posts.json ("+response.status+")");
+    const fileList = await response.json();
+    const files = fileList.posts;
+    const results = await Promise.allSettled(files.map(async file=>{
+      const res = await fetch("posts/"+file);
+      if(!res.ok) throw new Error("Failed to load "+file+" ("+res.status+")");
+      const text = await res.text();
+      const post=parsePost(text);
+      post.slug=slugify(post.title);
+      return post;
+    }));
+    posts = results
+      .filter(r=>r.status==="fulfilled")
+      .map(r=>r.value);
+    posts.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    renderSidebar();
+    const hash=window.location.hash;
+    if(hash.startsWith("#post=")){
+      const slug = decodeURIComponent(hash.split("=")[1]);
+      showSinglePost(slug,false);
+    }else renderPage(true);
+  } catch(err) {
+    document.getElementById("blog").innerHTML=
+      '<article><h2>Could not load posts</h2><p>'+escapeHtml(err.message)+'</p></article>';
+    console.error(err);
+  }
+}
+
+/* parsePost: unchanged */
+function parsePost(text){
+  const normalized=text.replace(/\r\n?/g,"\n");
+  const match=normalized.match(/^---\n([\s\S]*?)\n---\n?/);
+  const metadata={};
+  if(match){
+    match[1].split("\n").forEach(line=>{
+      const separator=line.indexOf(":");
+      if(separator<0) return;
+      const key=line.slice(0,separator).trim().toLowerCase();
+      let value=line.slice(separator+1).trim();
+      if((value.startsWith('"')&&value.endsWith('"'))||(value.startsWith("'")&&value.endsWith("'"))) value=value.slice(1,-1);
+      metadata[key]=value;
+    });
+  }
+  const content=match?normalized.slice(match[0].length).trim():normalized.trim();
+  return {title:metadata.title||"Untitled",date:metadata.date||"",content};
+}
+
+/* truncateToFirstHeading: returns text before the first markdown heading line */
+function truncateToFirstHeading(content){
+  const lines = content.split("\n");
+  const headingIdx = lines.findIndex(l => /^#{1,6} /.test(l.trim()));
+  if(headingIdx > 0) return lines.slice(0, headingIdx).join("\n").trim();
+  const blocks=content.trim().split(/\n\s*\n/);
+  return blocks.length>1?blocks[0].trim():null;
+}
+
+/* formatContent: accepts optional {preview:bool, slug:string} as second arg */
+function prepareObsidianMarkdown(content){
+  return content
+    .replace(/%%[\s\S]*?%%/g,"")
+    .replace(/!\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,(match,path,label)=>{
+      const webPath=path.trim().replace(/^(\.\.\/)+/,"").replace(/^\//,"");
+      return `![${label||""}](${encodeURI(webPath)})`;
+    })
+    .replace(/\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]/g,(match,target,label)=>`[${label||target}](#post=${encodeURIComponent(slugify(target.trim()))})`)
+    .replace(/\]\((\.\.\/)+/g,"](")
+    .replace(/==([^=\n]+)==/g,"<mark>$1</mark>");
+}
+
+function enhanceCallouts(container){
+  container.querySelectorAll("blockquote").forEach(block=>{
+    const first=block.querySelector("p");
+    if(!first) return;
+    const match=first.innerHTML.match(/^\[!([\w-]+)\]([+-])?(?:\s+([^<]+))?<br>\s*/i);
+    if(!match) return;
+    first.innerHTML=first.innerHTML.replace(match[0],"");
+    block.classList.add("callout",`callout-${match[1].toLowerCase()}`);
+    const title=document.createElement("div");
+    title.className="callout-title";
+    title.textContent=match[3]||match[1].replace(/-/g," ");
+    block.prepend(title);
+  });
+}
+
+function formatContent(content, opts){
+  opts = opts || {};
+  let rawContent = content;
+  let appendReadMore = "";
+  if(opts.preview){
+    const truncated = truncateToFirstHeading(content);
+    if(truncated !== null){
+      rawContent = truncated;
+      /* If the truncated preview has no image but the full post does, hoist the first image up */
+      const imgRe = /!\[[^\]]*\]\([^\)]+\)|!\[\[[^\]]+\]\]/;
+      if(!imgRe.test(rawContent)){
+        const firstImg = content.match(imgRe);
+        if(firstImg) rawContent = firstImg[0] + "\n\n" + rawContent;
+      }
+      appendReadMore = `<a class="read-more" href="#post=${encodeURIComponent(opts.slug)}">Read more →</a>`;
+    }
+  }
+  if(!window.marked||!window.DOMPurify) return "<p>Markdown renderer could not be loaded.</p>";
+  let html=DOMPurify.sanitize(marked.parse(prepareObsidianMarkdown(rawContent),{gfm:true,breaks:false}));
+  if(appendReadMore) html += appendReadMore;
+  return html;
+}
+
+/* ── Rendering ── */
+
+function renderSidebar(activeSlug=null){
+  const sidebar=document.getElementById("sidebar");
+  sidebar.innerHTML=posts.map(p=>{
+    const safe=escapeHtml(p.title);
+    const active=p.slug===activeSlug?'active':'';
+    return `<li class="${active}"><button data-slug="${escapeHtml(p.slug)}">${safe}</button></li>`;
+  }).join('');
+}
+
+/* Event delegation for sidebar clicks — no inline onclick */
+document.getElementById("sidebar").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-slug]");
+  if(btn) showSinglePost(btn.dataset.slug);
+});
+
+function fadeOutIn(callback){
+  const main=document.getElementById("blog");
+  main.style.opacity=0;
+  setTimeout(()=>{callback(); main.style.opacity=1;},300);
+}
+
+function renderPage(fromHash=false){
+  fadeOutIn(()=>{
+    const blog=document.getElementById("blog");
+    const start=(currentPage-1)*POSTS_PER_PAGE;
+    const end=start+POSTS_PER_PAGE;
+    const visible=posts.slice(start,end);
+    blog.innerHTML=visible.map(p=>{
+      const safeTitle=escapeHtml(p.title);
+      const safeDate=escapeHtml(p.date);
+      const safeSlug=escapeHtml(p.slug);
+      return `<article>
+        <h2><a href="#post=${safeSlug}" data-slug="${safeSlug}">${safeTitle}</a></h2>
+        <p><em>${safeDate}</em></p>
+        <div class="post-content">${formatContent(p.content, {preview:true, slug:p.slug})}</div>
+      </article>`;
+    }).join('');
+    blog.querySelectorAll(".post-content").forEach(enhanceCallouts);
+    document.getElementById("prevBtn").disabled=currentPage===1;
+    document.getElementById("nextBtn").disabled=end>=posts.length;
+    showingSingle=false;
+    renderSidebar();
+    if(!fromHash) history.pushState(null,"","#");
+    document.title="100percentblog";
+  });
+}
+
+/* Event delegation for article title links — no inline onclick */
+document.getElementById("blog").addEventListener("click",e=>{
+  const link=e.target.closest("a[data-slug]");
+  if(link){ e.preventDefault(); showSinglePost(link.dataset.slug); }
+  const backBtn=e.target.closest("button[data-action='back']");
+  if(backBtn) renderPage();
+});
+
+function showSinglePost(slug,push=true){
+  fadeOutIn(()=>{
+    const post=posts.find(p=>p.slug===slug);
+    if(!post) return renderPage();
+    const blog=document.getElementById("blog");
+    const safeTitle=escapeHtml(post.title);
+    const safeDate=escapeHtml(post.date);
+    const safeSlug=escapeHtml(post.slug);
+    blog.innerHTML=`<article>
+      <h2><a href="#post=${safeSlug}" data-slug="${safeSlug}">${safeTitle}</a></h2>
+      <p><em>${safeDate}</em></p>
+      <div class="post-content">${formatContent(post.content)}</div>
+    </article>
+    <button data-action="back">← Back to all posts</button>`;
+    enhanceCallouts(blog.querySelector(".post-content"));
+    showingSingle=true;
+    document.getElementById("prevBtn").disabled=true;
+    document.getElementById("nextBtn").disabled=true;
+    if(push) history.pushState(null,"","#post="+encodeURIComponent(slug));
+    renderSidebar(slug);
+    document.title=post.title+" | 100percentblog";
+  });
+}
+
+/* ── Controls ── */
+
+document.getElementById("prevBtn").addEventListener("click",()=>{
+  if(!showingSingle&&currentPage>1){currentPage--;renderPage();}
+});
+document.getElementById("nextBtn").addEventListener("click",()=>{
+  if(!showingSingle&&currentPage*POSTS_PER_PAGE<posts.length){currentPage++;renderPage();}
+});
+
+document.getElementById("homeLink").addEventListener("click",event=>{
+  event.preventDefault();
+  currentPage=1;
+  renderPage();
+});
+
+const themeToggle=document.getElementById("themeToggle");
+themeToggle.addEventListener("click",()=>{
+  const isDark=document.documentElement.getAttribute("data-theme")==="dark";
+  document.documentElement.setAttribute("data-theme",isDark?"":"dark");
+  localStorage.setItem("theme",isDark?"":"dark");
+});
+/* Theme already applied in <head> before paint — no re-apply needed here */
+
+window.addEventListener("popstate",()=>{
+  const hash=window.location.hash;
+  if(hash.startsWith("#post=")){
+    const slug=decodeURIComponent(hash.split("=")[1]);
+    showSinglePost(slug,false);
+  } else {
+    showingSingle=false;
+    renderPage(true);
+  }
+});
+
+loadManifest();
+
+
+/* ── OS theme live-change listener ── */
+(function(){
+  var mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+  if(!mq) return;
+  mq.addEventListener("change", function(e){
+    // Only follow OS if the user hasn't set an explicit preference
+    if(!localStorage.getItem("theme")){
+      document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "");
+    }
+  });
+})();
+</script>
+</body>
+</html>

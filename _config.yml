@@ -1,8 +1,0 @@
-title: 100percentjake
-description: Cars, computers, projects, and other off-the-wall ideas.
-url: "https://100percentjake.github.io"
-baseurl: ""
-author: Jake Bickhard
-markdown: kramdown
-permalink: /:year/:month/:day/:title/
-timezone: America/Chicago
