@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M365 Group & Mailbox Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #f0f2f5;
+    }
+    #shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+    }
+    #login-screen h1 { font-size: 22px; font-weight: 600; }
+    #login-screen p  { color: #555; max-width: 440px; text-align: center; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary   { background: #0078d4; color: #fff; }
+    .btn-primary:hover:not(:disabled)   { background: #006cbd; }
+    .btn-secondary { background: #fff; color: #0078d4; border: 1px solid #0078d4; }
+    .btn-secondary:hover:not(:disabled) { background: #f0f6fd; }
+    .btn-danger    { background: #c50f1f; color: #fff; }
+    .btn-danger:hover:not(:disabled)    { background: #a80e1a; }
+
+    /* ── Report header ── */
+    #report-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    #report-header h1 { font-size: 18px; font-weight: 700; flex: 1; min-width: 200px; }
+    #tenant-label {
+      font-size: 12px;
+      color: #555;
+      background: #e8f0fb;
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+
+    /* ── Progress ── */
+    #progress-wrap {
+      background: #fff;
+      border: 1px solid #dde1e7;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    #progress-wrap h2 { font-size: 14px; margin-bottom: 10px; }
+    #progress-bar-outer {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    #progress-bar-inner {
+      height: 100%;
+      background: #0078d4;
+      border-radius: 4px;
+      transition: width .3s;
+      width: 0%;
+    }
+    #progress-text { font-size: 12px; color: #555; }
+    #error-box {
+      background: #fdf3f4;
+      border: 1px solid #f1a9ae;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      color: #c50f1f;
+      font-size: 12px;
+      display: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Filter bar ── */
+    #filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    #filter-bar input[type=search] {
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 13px;
+      width: 220px;
+    }
+    #filter-bar select {
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+    #stats-label { font-size: 12px; color: #666; margin-left: auto; }
+
+    /* ── Cards ── */
+    .resource-card {
+      background: #fff;
+      border: 1px solid #dde1e7;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .resource-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eef0f3;
+      background: #fafbfc;
+      flex-wrap: wrap;
+    }
+    .resource-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .icon-m365     { background: #e9f2ff; }
+    .icon-teams    { background: #ede7f6; }
+    .icon-shared   { background: #fff3e0; }
+    .icon-distrib  { background: #e8f5e9; }
+    .icon-security { background: #fce4ec; }
+    .icon-mailsec  { background: #fff8e1; }
+
+    .resource-title { font-size: 14px; font-weight: 700; }
+    .resource-email { font-size: 11px; color: #666; margin-top: 1px; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .badge-m365     { background: #cfe4ff; color: #0047b3; }
+    .badge-teams    { background: #ede7f6; color: #4a148c; }
+    .badge-shared   { background: #fff3e0; color: #e65100; }
+    .badge-distrib  { background: #e8f5e9; color: #1b5e20; }
+    .badge-security { background: #fce4ec; color: #880e4f; }
+    .badge-mailsec  { background: #fff8e1; color: #f57f17; }
+
+    .activity-chip {
+      margin-left: auto;
+      font-size: 11px; color: #555;
+      background: #f0f2f5;
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .activity-chip.stale  { color: #c50f1f; background: #fdf3f4; }
+    .activity-chip.recent { color: #107c10; background: #dff6dd; }
+
+    .resource-body { padding: 12px 16px; }
+
+    .person-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .person-chip {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: #f6f8fa;
+      font-size: 12px;
+      border: 1px solid #e8eaed;
+    }
+    .person-chip.owner-chip { background: #fff9e6; border-color: #f0d080; }
+    .avatar {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .person-info { overflow: hidden; }
+    .person-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .person-upn  { font-size: 10px; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .owner-star  { font-size: 10px; color: #c48a00; margin-left: auto; flex-shrink: 0; }
+
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: #777;
+      margin-top: 10px; margin-bottom: 4px;
+    }
+    .section-label:first-child { margin-top: 0; }
+    .empty-note { font-size: 12px; color: #aaa; font-style: italic; }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; }
+      #shell { padding: 0; max-width: 100%; }
+      #report-header .btn, #filter-bar, #error-box { display: none !important; }
+      .resource-card { border: 1px solid #ccc; margin-bottom: 12px; }
+      .resource-card-header { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .person-chip { border: 1px solid #ddd; }
+    }
+
+    .hidden { display: none !important; }
+    .mt8 { margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- ══ LOGIN ══ -->
+  <div id="login-screen">
+    <h1>M365 Group & Mailbox Reporter</h1>
+    <p>
+      Sign in as a Global Admin to generate a printable inventory of all groups
+      and shared mailboxes in your tenant.<br><br>
+      You will see a Microsoft consent screen listing the required read-only
+      permissions. As a Global Admin you can approve these for the entire tenant.
+    </p>
+    <button class="btn btn-primary" id="sign-in-btn">
+      🔐 Sign in with Microsoft
+    </button>
+    <p style="font-size:11px;color:#aaa;text-align:center;max-width:380px;line-height:1.6;">
+      Uses the Microsoft Graph PowerShell well-known public client.<br>
+      No app registration required. All permissions are read-only.
+    </p>
+  </div>
+
+  <!-- ══ REPORT ══ -->
+  <div id="report-screen" class="hidden">
+
+    <div id="report-header">
+      <h1>M365 Group & Mailbox Report</h1>
+      <span id="tenant-label"></span>
+      <button class="btn btn-secondary" id="refresh-btn">🔄 Refresh</button>
+      <button class="btn btn-primary"   id="print-btn">🖨 Print</button>
+      <button class="btn btn-danger"    id="sign-out-btn">Sign Out</button>
+    </div>
+
+    <div id="progress-wrap">
+      <h2 id="progress-title">Loading data…</h2>
+      <div id="progress-bar-outer"><div id="progress-bar-inner"></div></div>
+      <div id="progress-text">Initializing…</div>
+      <div id="error-box"></div>
+    </div>
+
+    <div id="filter-bar" class="hidden">
+      <input type="search" id="search-input" placeholder="Search by name or email…"/>
+      <select id="type-filter">
+        <option value="">All types</option>
+        <option value="Teams-enabled Group">Teams-enabled</option>
+        <option value="M365 Group">M365 Groups</option>
+        <option value="Shared Mailbox">Shared Mailboxes</option>
+        <option value="Distribution List">Distribution Lists</option>
+        <option value="Mail-enabled Security">Mail-enabled Security</option>
+        <option value="Security Group">Security Groups</option>
+      </select>
+      <span id="stats-label"></span>
+    </div>
+
+    <div id="cards-container"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Microsoft Graph PowerShell well-known public client ID.
+// This is a first-party Microsoft application present in every tenant.
+// It is the same client ID used by Connect-MgGraph in PowerShell and requires
+// no custom app registration.
+// Reference: https://learn.microsoft.com/en-us/powershell/microsoftgraph/get-started
+// ─────────────────────────────────────────────────────────────────────────────
+const CLIENT_ID = 'd6d7b4b9-2826-4940-b6c2-5c3d9bc1b7fe';
+
+// Delegated, read-only Graph scopes — minimum necessary permissions.
+// These MUST NOT be mixed with .default in the same token request.
+// Reference: https://learn.microsoft.com/en-us/graph/permissions-reference
+const SCOPES = [
+  'Group.Read.All',         // Read all groups and their properties
+  'GroupMember.Read.All',   // Read group memberships
+  'User.Read.All',          // Read all user profiles (needed for member display names)
+  'Reports.Read.All',       // Read usage/activity reports
+  'MailboxSettings.Read',   // Detect shared mailboxes via userPurpose
+  'Team.ReadBasic.All'      // Read basic Teams properties
+];
+
+let msalInstance   = null;
+let currentAccount = null;
+let allResources   = [];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MSAL v3 — Authorization Code flow with PKCE (the correct flow for SPAs).
+// 'organizations' authority restricts to work/school accounts only; personal
+// Microsoft accounts cannot be tenant admins and are intentionally excluded.
+// Reference: https://learn.microsoft.com/en-us/entra/msal/javascript/
+// ─────────────────────────────────────────────────────────────────────────────
+function buildMsal() {
+  return new window.msal.PublicClientApplication({
+    auth: {
+      clientId:    CLIENT_ID,
+      authority:   'https://login.microsoftonline.com/organizations',
+      redirectUri: window.location.href.split('?')[0].split('#')[0]
+    },
+    cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
+  });
+}
+
+// Silent token acquisition with interactive fallback.
+// acquireTokenSilent uses the cached token; falls back to popup on expiry.
+async function getToken() {
+  try {
+    const res = await msalInstance.acquireTokenSilent({
+      scopes:  SCOPES,
+      account: currentAccount
+    });
+    return res.accessToken;
+  } catch (err) {
+    // InteractionRequiredAuthError or similar — need interactive re-auth
+    const res = await msalInstance.acquireTokenPopup({
+      scopes:  SCOPES,
+      account: currentAccount
+    });
+    currentAccount = res.account;
+    return res.accessToken;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRAPH HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+async function graphGet(url, extraHeaders = {}) {
+  const token = await getToken();
+  const fullUrl = url.startsWith('https://') ? url : `https://graph.microsoft.com/v1.0${url}`;
+  const res = await fetch(fullUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...extraHeaders
+    }
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Graph ${res.status} on ${fullUrl.replace('https://graph.microsoft.com/v1.0','')}: ${body.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+// Follows @odata.nextLink pages automatically
+async function graphGetAll(url, extraHeaders = {}) {
+  let items = [];
+  let next  = url;
+  while (next) {
+    const data = await graphGet(next, extraHeaders);
+    if (Array.isArray(data.value)) items = items.concat(data.value);
+    next = data['@odata.nextLink'] || null;
+  }
+  return items;
+}
+
+// JSON batching — max 20 requests per batch call per Graph spec
+// Reference: https://learn.microsoft.com/en-us/graph/json-batching
+async function graphBatch(requests) {
+  const token   = await getToken();
+  const results = [];
+  for (let i = 0; i < requests.length; i += 20) {
+    const chunk = requests.slice(i, i + 20).map((r, j) => ({
+      id:     String(i + j),
+      method: 'GET',
+      url:    r.url
+    }));
+    const res = await fetch('https://graph.microsoft.com/v1.0/$batch', {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ requests: chunk })
+    });
+    const data = await res.json();
+    results.push(...(data.responses || []));
+  }
+  return results;
+}
+
+// Minimal CSV parser for Graph reporting API responses
+function parseCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    return obj;
+  });
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function avatarColor(name) {
+  const palette = ['#0078d4','#107c10','#c50f1f','#8764b8','#ca5010','#038387'];
+  let h = 0;
+  for (const c of (name || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+  return palette[Math.abs(h) % palette.length];
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&').replace(/</g, '<')
+    .replace(/>/g, '>').replace(/"/g, '"');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROGRESS UI
+// ─────────────────────────────────────────────────────────────────────────────
+function setProgress(pct, msg) {
+  document.getElementById('progress-bar-inner').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = msg;
+}
+function setProgressTitle(t) {
+  document.getElementById('progress-title').textContent = t;
+}
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.style.display = 'block';
+  box.textContent   = '⚠ ' + msg;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA LOADING
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadData() {
+  allResources = [];
+  document.getElementById('progress-wrap').classList.remove('hidden');
+  document.getElementById('filter-bar').classList.add('hidden');
+  document.getElementById('cards-container').innerHTML = '';
+  document.getElementById('error-box').style.display  = 'none';
+
+  try {
+    // ── 1. Fetch all directory groups ───────────────────────────────────────
+    // $select limits response to only the fields we actually use (least privilege)
+    setProgressTitle('Fetching groups…');
+    setProgress(5, 'Fetching all groups from directory…');
+    const groups = await graphGetAll(
+      '/groups?$select=id,displayName,mail,mailEnabled,securityEnabled,groupTypes,description,createdDateTime&$top=999',
+      { ConsistencyLevel: 'eventual' }
+    );
+    setProgress(15, `Found ${groups.length} groups. Identifying Teams…`);
+
+    // ── 2. Identify Teams-enabled groups ────────────────────────────────────
+    // resourceProvisioningOptions filter is the documented way to find Teams groups
+    // Reference: https://learn.microsoft.com/en-us/graph/teams-list-all-teams
+    const teamsSet = new Set();
+    try {
+      const teamsGroups = await graphGetAll(
+        "/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id&$top=999"
+      );
+      teamsGroups.forEach(t => teamsSet.add(t.id));
+    } catch {
+      // Non-fatal — groups will fall through to M365 Group classification
+    }
+    setProgress(22, 'Fetching activity reports…');
+
+    // ── 3. Group activity report (last 180 days) ─────────────────────────────
+    // Uses Reports.Read.All delegated permission
+    // Reference: https://learn.microsoft.com/en-us/graph/api/reportroot-getoffice365groupsactivitydetail
+    const activityMap = {};
+    try {
+      const token = await getToken();
+      const rpt = await fetch(
+        "https://graph.microsoft.com/v1.0/reports/getOffice365GroupsActivityDetail(period='D180')",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (rpt.ok) {
+        parseCsv(await rpt.text()).forEach(row => {
+          const id  = row['Group Id'] || row['group Id'] || '';
+          const lad = row['Last Activity Date'] || '';
+          if (id) activityMap[id] = lad;
+        });
+      }
+    } catch {
+      // Non-fatal — activity chips will show "No activity data"
+    }
+    setProgress(30, `Fetching members & owners for ${groups.length} groups…`);
+
+    // ── 4. Members and owners via JSON batching ──────────────────────────────
+    // Batch requests are the documented efficient approach for multiple calls
+    // Reference: https://learn.microsoft.com/en-us/graph/json-batching
+    const memberReqs = groups.map(g => ({
+      url: `/groups/${g.id}/members?$select=id,displayName,userPrincipalName,mail&$top=999`
+    }));
+    const ownerReqs = groups.map(g => ({
+      url: `/groups/${g.id}/owners?$select=id,displayName,userPrincipalName,mail&$top=999`
+    }));
+
+    const memberResponses = await graphBatch(memberReqs);
+    setProgress(55, 'Members fetched. Fetching owners…');
+    const ownerResponses = await graphBatch(ownerReqs);
+    setProgress(70, 'Processing…');
+
+    // Map batch responses back by their numeric id
+    const membersByIdx = {};
+    const ownersByIdx  = {};
+    memberResponses.forEach(r => {
+      const i = parseInt(r.id);
+      membersByIdx[i] = (r.status === 200 && r.body?.value) ? r.body.value : [];
+    });
+    ownerResponses.forEach(r => {
+      const i = parseInt(r.id);
+      ownersByIdx[i]  = (r.status === 200 && r.body?.value) ? r.body.value : [];
+    });
+
+    // ── 5. Classify groups ───────────────────────────────────────────────────
+    // Classification logic follows the documented group type matrix:
+    // Reference: https://learn.microsoft.com/en-us/graph/api/resources/groups-overview
+    groups.forEach((g, idx) => {
+      const isUnified  = (g.groupTypes || []).includes('Unified');
+      const isTeam     = teamsSet.has(g.id);
+      const isMail     = !!g.mailEnabled;
+      const isSecurity = !!g.securityEnabled;
+
+      let type, badgeClass, iconClass, icon;
+      if (isTeam) {
+        type = 'Teams-enabled Group'; badgeClass = 'badge-teams'; iconClass = 'icon-teams'; icon = '👥';
+      } else if (isUnified) {
+        type = 'M365 Group';          badgeClass = 'badge-m365';  iconClass = 'icon-m365';  icon = '🏢';
+      } else if (isMail && isSecurity) {
+        type = 'Mail-enabled Security'; badgeClass = 'badge-mailsec'; iconClass = 'icon-mailsec'; icon = '🔒';
+      } else if (isMail) {
+        type = 'Distribution List';   badgeClass = 'badge-distrib'; iconClass = 'icon-distrib'; icon = '📨';
+      } else if (isSecurity) {
+        type = 'Security Group';      badgeClass = 'badge-security'; iconClass = 'icon-security'; icon = '🛡️';
+      } else {
+        type = 'Group';               badgeClass = 'badge-m365';  iconClass = 'icon-m365';  icon = '📁';
+      }
+
+      allResources.push({
+        id: g.id,
+        displayName: g.displayName || '(no name)',
+        mail:        g.mail        || '',
+        description: g.description || '',
+        type, badgeClass, iconClass, icon,
+        members:      membersByIdx[idx] || [],
+        owners:       ownersByIdx[idx]  || [],
+        lastActivity: activityMap[g.id] || null
+      });
+    });
+
+    // ── 6. Shared mailboxes ──────────────────────────────────────────────────
+    // Shared mailboxes appear as unlicensed user objects with userPurpose='shared'
+    // Reference: https://learn.microsoft.com/en-us/graph/api/resources/mailboxsettings
+    setProgress(78, 'Scanning for shared mailboxes…');
+    try {
+      // Filter to unlicensed users — shared mailboxes are never licensed
+      const unlicensed = await graphGetAll(
+        '/users?$select=id,displayName,userPrincipalName,mail&$top=999&$filter=assignedLicenses/$count eq 0&$count=true',
+        { ConsistencyLevel: 'eventual' }
+      );
+      const mbReqs = unlicensed.map(u => ({
+        url: `/users/${u.id}/mailboxSettings?$select=userPurpose`
+      }));
+      const mbResponses = await graphBatch(mbReqs);
+      mbResponses.forEach((r, idx) => {
+        if (r.status === 200 && r.body?.userPurpose === 'shared') {
+          const u = unlicensed[idx];
+          allResources.push({
+            id:           u.id,
+            displayName:  u.displayName || u.userPrincipalName,
+            mail:         u.mail        || u.userPrincipalName,
+            description:  'Shared Mailbox',
+            type:         'Shared Mailbox',
+            badgeClass:   'badge-shared',
+            iconClass:    'icon-shared',
+            icon:         '📬',
+            members:      [],
+            owners:       [],
+            lastActivity: null,
+            delegatesNote: true
+          });
+        }
+      });
+    } catch (e) {
+      showError('Shared mailbox scan failed: ' + e.message);
+    }
+
+    setProgress(100, `Loaded ${allResources.length} resources.`);
+    setProgressTitle(`Report complete — ${allResources.length} resources found`);
+
+    renderAll();
+    document.getElementById('filter-bar').classList.remove('hidden');
+
+  } catch (err) {
+    setProgressTitle('Error loading data');
+    showError(err.message);
+    console.error(err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDERING
+// ─────────────────────────────────────────────────────────────────────────────
+function activityChipHtml(lastActivity) {
+  if (!lastActivity) return '<span class="activity-chip">No activity data</span>';
+  const days = daysSince(lastActivity);
+  if (days === null) return '<span class="activity-chip">No activity data</span>';
+  const cls   = days > 90 ? 'stale' : days < 14 ? 'recent' : '';
+  const label = days === 0 ? 'Active today'
+    : days === 1 ? 'Active yesterday'
+    : `Last active ${days}d ago`;
+  return `<span class="activity-chip ${cls}" title="Last activity: ${lastActivity}">${label}</span>`;
+}
+
+function personChipHtml(p, isOwner) {
+  const bg  = avatarColor(p.displayName);
+  const ini = initials(p.displayName);
+  const upn = p.userPrincipalName || p.mail || '';
+  return `
+    <div class="person-chip${isOwner ? ' owner-chip' : ''}">
+      <div class="avatar" style="background:${bg}">${ini}</div>
+      <div class="person-info">
+        <div class="person-name" title="${esc(p.displayName || '')}">${esc(p.displayName || upn)}</div>
+        <div class="person-upn"  title="${esc(upn)}">${esc(upn)}</div>
+      </div>
+      ${isOwner ? '<span class="owner-star" title="Owner">★</span>' : ''}
+    </div>`;
+}
+
+function renderCard(res) {
+  const ownerIds = new Set(res.owners.map(o => o.id));
+
+  const ownersHtml = res.owners.length
+    ? res.owners.map(p => personChipHtml(p, true)).join('')
+    : '<span class="empty-note">No owners listed</span>';
+
+  const nonOwnerMembers = res.members.filter(m => !ownerIds.has(m.id));
+  const membersHtml = nonOwnerMembers.length
+    ? nonOwnerMembers.map(p => personChipHtml(p, false)).join('')
+    : res.delegatesNote
+      ? '<span class="empty-note">Full Access delegates are not exposed by the Graph API — check the Exchange Admin Center for mailbox permissions.</span>'
+      : '<span class="empty-note">No members</span>';
+
+  const totalCount = res.members.length + res.owners.length;
+  const countLabel = res.type !== 'Shared Mailbox'
+    ? `<span style="font-size:11px;color:#888;margin-left:4px;">(${totalCount})</span>`
+    : '';
+
+  return `
+    <div class="resource-card"
+         data-type="${esc(res.type)}"
+         data-name="${esc(res.displayName.toLowerCase())}"
+         data-email="${esc(res.mail.toLowerCase())}">
+      <div class="resource-card-header">
+        <div class="resource-icon ${res.iconClass}">${res.icon}</div>
+        <div>
+          <div class="resource-title">${esc(res.displayName)}</div>
+          <div class="resource-email">${esc(res.mail)}${res.description ? ' · ' + esc(res.description.slice(0, 80)) : ''}</div>
+        </div>
+        <span class="badge ${res.badgeClass}">${esc(res.type)}</span>
+        ${countLabel}
+        ${activityChipHtml(res.lastActivity)}
+      </div>
+      <div class="resource-body">
+        <div class="section-label">Owners</div>
+        <div class="person-grid">${ownersHtml}</div>
+        <div class="section-label mt8">Members</div>
+        <div class="person-grid">${membersHtml}</div>
+      </div>
+    </div>`;
+}
+
+function renderAll() {
+  const search     = (document.getElementById('search-input').value || '').toLowerCase();
+  const typeFilter = document.getElementById('type-filter').value;
+
+  const filtered = allResources.filter(r => {
+    if (typeFilter && r.type !== typeFilter) return false;
+    if (search && !r.displayName.toLowerCase().includes(search) && !r.mail.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const typeOrder = [
+    'Teams-enabled Group','M365 Group','Shared Mailbox',
+    'Distribution List','Mail-enabled Security','Security Group','Group'
+  ];
+  filtered.sort((a, b) => {
+    const diff = typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+    return diff !== 0 ? diff : a.displayName.localeCompare(b.displayName);
+  });
+
+  document.getElementById('cards-container').innerHTML = filtered.length
+    ? filtered.map(renderCard).join('')
+    : '<p style="color:#888;text-align:center;padding:40px;">No resources match your filter.</p>';
+
+  document.getElementById('stats-label').textContent =
+    `Showing ${filtered.length} of ${allResources.length} resources`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENT WIRING
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('sign-in-btn').addEventListener('click', async () => {
+  if (typeof window.msal === 'undefined') {
+    alert('The Microsoft Authentication Library failed to load. Check your internet connection or disable any content blockers, then refresh.');
+    return;
+  }
+
+  try {
+    msalInstance = buildMsal();
+
+    // MSAL v3 requires initialize() before any interactive call
+    await msalInstance.initialize();
+
+    // Handle any redirect response that may already be in the URL
+    await msalInstance.handleRedirectPromise();
+
+    // loginPopup with the specific delegated scopes.
+    // prompt:'consent' forces the consent screen to appear so the Global Admin
+    // can check "Consent on behalf of your organization".
+    // Do NOT mix .default with specific scopes — this is what caused the
+    // previous AADSTS70011 error. Use one approach or the other, never both.
+    // Reference: https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc
+    const result = await msalInstance.loginPopup({
+      scopes: SCOPES,
+      prompt: 'consent'
+    });
+
+    currentAccount = result.account;
+
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('report-screen').classList.remove('hidden');
+    document.getElementById('tenant-label').textContent =
+      `${currentAccount.username}  ·  Tenant: ${currentAccount.tenantId}`;
+
+    await loadData();
+
+  } catch (e) {
+    // BrowserAuthError: user closed the popup — don't alarm them
+    if (e.errorCode === 'user_cancelled' || e.message?.includes('user_cancelled')) {
+      return;
+    }
+    alert('Sign-in failed: ' + e.message);
+    console.error(e);
+  }
+});
+
+document.getElementById('sign-out-btn').addEventListener('click', async () => {
+  try {
+    await msalInstance.logoutPopup({ account: currentAccount });
+  } finally {
+    location.reload();
+  }
+});
+
+document.getElementById('refresh-btn').addEventListener('click', () => loadData());
+document.getElementById('print-btn').addEventListener('click', () => window.print());
+document.getElementById('search-input').addEventListener('input', renderAll);
+document.getElementById('type-filter').addEventListener('change', renderAll);
+</script>
+</body>
+</html>

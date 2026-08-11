@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M365 Audit Report</title>
+  <style>
+    :root{
+      --bg:#f0f2f5;--surface:#fff;--surface2:#fafbfc;--border:#dde1e7;--border2:#eef0f3;
+      --text:#1a1a1a;--text2:#555;--text3:#777;--text4:#aaa;--accent:#0078d4;--accent2:#006cbd;
+      --row-hover:#f8f9fb;--chip-bg:#f0f2f5;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;
+      --stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;
+      --warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;
+      --license-pill-bg:#e8f0fb;--license-pill-text:#0047b3;--license-pill-border:#c5d9f5;
+      --info-bg:#f0f7ff;--info-border:#b3d4f5;--info-text:#0550ae;
+    }
+    [data-theme="blue-dark"]{--bg:#1a1a1e;--surface:#242428;--surface2:#2c2c32;--border:#3a3a42;--border2:#303038;--text:#e8e8ec;--text2:#aaaabc;--text3:#8888a0;--text4:#606070;--accent:#4da3e8;--accent2:#3d93d8;--row-hover:#2e2e36;--chip-bg:#2c2c38;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#0e2d4a;--license-pill-text:#7ec4ff;--license-pill-border:#1a4a70;--info-bg:#0a1f35;--info-border:#1a4a70;--info-text:#7ec4ff;}
+    [data-theme="midnight-light"]{--bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#edf2f7;--text:#0f172a;--text2:#475569;--text3:#64748b;--text4:#94a3b8;--accent:#0f4c81;--accent2:#0e3d6a;--row-hover:#f1f5f9;--chip-bg:#e2e8f0;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#dbeafe;--license-pill-text:#1e40af;--license-pill-border:#bfdbfe;--info-bg:#eff6ff;--info-border:#bfdbfe;--info-text:#1e40af;}
+    [data-theme="midnight-dark"]{--bg:#0f1419;--surface:#1e293b;--surface2:#253346;--border:#334155;--border2:#2a3a50;--text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;--text4:#475569;--accent:#60a5fa;--accent2:#3b82f6;--row-hover:#253346;--chip-bg:#1e2d40;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#1e3a5f;--license-pill-text:#93c5fd;--license-pill-border:#1e40af;--info-bg:#0f1e35;--info-border:#1e40af;--info-text:#93c5fd;}
+    [data-theme="forest-light"]{--bg:#f0fdf4;--surface:#fff;--surface2:#f0fdf4;--border:#bbf7d0;--border2:#dcfce7;--text:#14532d;--text2:#4b5563;--text3:#6b7280;--text4:#9ca3af;--accent:#15803d;--accent2:#166534;--row-hover:#f0fdf4;--chip-bg:#dcfce7;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#d1fae5;--license-pill-text:#065f46;--license-pill-border:#a7f3d0;--info-bg:#f0fdf4;--info-border:#a7f3d0;--info-text:#065f46;}
+    [data-theme="forest-dark"]{--bg:#051f0f;--surface:#0d2d1a;--surface2:#14532d;--border:#1a4731;--border2:#143d27;--text:#f0fdf4;--text2:#bbf7d0;--text3:#86efac;--text4:#4ade80;--accent:#4ade80;--accent2:#22c55e;--row-hover:#0f3320;--chip-bg:#0d2d1a;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#14532d;--license-pill-text:#86efac;--license-pill-border:#166534;--info-bg:#0a2e18;--info-border:#166534;--info-text:#86efac;}
+    [data-theme="rose-light"]{--bg:#fff1f5;--surface:#fff;--surface2:#fdf2f8;--border:#fbcfe8;--border2:#fce7f3;--text:#831843;--text2:#6b7280;--text3:#9ca3af;--text4:#d1d5db;--accent:#be185d;--accent2:#9d174d;--row-hover:#fdf2f8;--chip-bg:#fce7f3;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#fce7f3;--license-pill-text:#9d174d;--license-pill-border:#fbcfe8;--info-bg:#fff1f5;--info-border:#fbcfe8;--info-text:#9d174d;}
+    [data-theme="rose-dark"]{--bg:#1f0b17;--surface:#2d0f20;--surface2:#3d1530;--border:#6d1f45;--border2:#521635;--text:#fdf2f8;--text2:#fbcfe8;--text3:#f9a8d4;--text4:#ec4899;--accent:#f472b6;--accent2:#ec4899;--row-hover:#3d1530;--chip-bg:#2d0f20;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#500724;--license-pill-text:#f9a8d4;--license-pill-border:#831843;--info-bg:#2d0f20;--info-border:#831843;--info-text:#f9a8d4;}
+    [data-theme="amber-light"]{--bg:#fffbeb;--surface:#fff;--surface2:#fffbeb;--border:#fde68a;--border2:#fef3c7;--text:#78350f;--text2:#6b7280;--text3:#9ca3af;--text4:#d1d5db;--accent:#b45309;--accent2:#92400e;--row-hover:#fef3c7;--chip-bg:#fde68a;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#fef3c7;--license-pill-text:#92400e;--license-pill-border:#fde68a;--info-bg:#fffbeb;--info-border:#fde68a;--info-text:#92400e;}
+    [data-theme="amber-dark"]{--bg:#1f1209;--surface:#2d1b0e;--surface2:#3d2510;--border:#78350f;--border2:#5c2d0a;--text:#fffbeb;--text2:#fde68a;--text3:#fcd34d;--text4:#f59e0b;--accent:#fcd34d;--accent2:#f59e0b;--row-hover:#3d2510;--chip-bg:#2d1b0e;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#451a03;--license-pill-text:#fcd34d;--license-pill-border:#78350f;--info-bg:#2d1b0e;--info-border:#78350f;--info-text:#fcd34d;}
+    [data-theme="slate-light"]{--bg:#f8fafc;--surface:#fff;--surface2:#f1f5f9;--border:#cbd5e1;--border2:#e2e8f0;--text:#0f172a;--text2:#64748b;--text3:#94a3b8;--text4:#cbd5e1;--accent:#1e293b;--accent2:#0f172a;--row-hover:#f1f5f9;--chip-bg:#e2e8f0;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#e2e8f0;--license-pill-text:#1e293b;--license-pill-border:#cbd5e1;--info-bg:#f0f7ff;--info-border:#cbd5e1;--info-text:#1e293b;}
+    [data-theme="slate-dark"]{--bg:#0f172a;--surface:#1e293b;--surface2:#253347;--border:#334155;--border2:#2a3a50;--text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;--text4:#475569;--accent:#94a3b8;--accent2:#64748b;--row-hover:#253347;--chip-bg:#1e2d40;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#1e293b;--license-pill-text:#94a3b8;--license-pill-border:#334155;--info-bg:#1e293b;--info-border:#334155;--info-text:#94a3b8;}
+    [data-theme="purple-light"]{--bg:#faf5ff;--surface:#fff;--surface2:#faf5ff;--border:#e9d5ff;--border2:#f3e8ff;--text:#4c1d95;--text2:#6b7280;--text3:#9ca3af;--text4:#d1d5db;--accent:#6d28d9;--accent2:#5b21b6;--row-hover:#f3e8ff;--chip-bg:#e9d5ff;--stale-bg:#fdf3f4;--stale-border:#f1a9ae;--stale-text:#c50f1f;--fresh-bg:#dff6dd;--fresh-text:#107c10;--warn-bg:#fff4ce;--warn-border:#f0d080;--warn-text:#7d5a00;--license-pill-bg:#ede9fe;--license-pill-text:#4c1d95;--license-pill-border:#ddd6fe;--info-bg:#faf5ff;--info-border:#ddd6fe;--info-text:#4c1d95;}
+    [data-theme="purple-dark"]{--bg:#1f0e42;--surface:#2e1065;--surface2:#3b0f7a;--border:#5b21b6;--border2:#4c1d95;--text:#faf5ff;--text2:#e9d5ff;--text3:#c4b5fd;--text4:#a78bfa;--accent:#c4b5fd;--accent2:#a78bfa;--row-hover:#3b0f7a;--chip-bg:#2e1065;--stale-bg:#2d1a1c;--stale-border:#7a3a3e;--stale-text:#f28b8b;--fresh-bg:#1a2d1a;--fresh-text:#6dbf6d;--warn-bg:#2a2000;--warn-border:#6b5200;--warn-text:#ffd966;--license-pill-bg:#3b0764;--license-pill-text:#c4b5fd;--license-pill-border:#6d28d9;--info-bg:#2e1065;--info-border:#6d28d9;--info-text:#c4b5fd;}
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--text);background:var(--bg);transition:background .2s,color .2s;}
+    #shell{max-width:1280px;margin:0 auto;padding:24px 16px;}
+    #loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;font-size:14px;color:#333;}
+    [data-theme$="-dark"] #loading-overlay{background:rgba(15,15,20,.95);color:#ccc;}
+    .spinner{width:40px;height:40px;border:4px solid #e0e0e0;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    #loading-overlay.hidden{display:none;}
+    #signin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:20px;text-align:center;}
+    #signin-screen h1{font-size:22px;font-weight:800;}
+    #signin-screen p{color:var(--text2);max-width:480px;line-height:1.6;}
+    #error-banner{background:var(--stale-bg);border:1px solid var(--stale-border);border-radius:8px;padding:12px 16px;color:var(--stale-text);font-size:12px;margin-top:8px;display:none;max-width:480px;}
+
+    /* ── Capability notice banner ────────────────────────────────────────── */
+    #capability-bar{display:none;background:var(--info-bg);border:1px solid var(--info-border);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--info-text);line-height:1.6;}
+    #capability-bar.visible{display:block;}
+    #capability-bar strong{font-weight:900;}
+    #capability-bar ul{margin:4px 0 0 16px;padding:0;}
+    #capability-bar li{margin-bottom:2px;}
+    #capability-bar .cap-close{float:right;cursor:pointer;font-size:14px;font-weight:900;line-height:1;opacity:.6;margin-left:8px;}
+    #capability-bar .cap-close:hover{opacity:1;}
+
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
+    .btn-primary{background:var(--accent);color:#fff;} .btn-primary:hover{background:var(--accent2);}
+    .btn-secondary{background:var(--surface);color:var(--accent);border:1px solid var(--accent);} .btn-secondary:hover{background:var(--chip-bg);}
+    .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);} .btn-ghost:hover{background:var(--chip-bg);}
+    .btn-icon{display:inline-flex;align-items:center;justify-content:center;background:var(--surface);color:var(--text2);border:1px solid var(--border);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;line-height:1;transition:background .15s;white-space:nowrap;} .btn-icon:hover{background:var(--chip-bg);}
+    #theme-picker-wrap{position:relative;display:inline-flex;}
+    #theme-picker-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;z-index:200;min-width:220px;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+    #theme-picker-menu.open{display:block;}
+    .theme-picker-section{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:4px 6px 6px;margin-top:4px;}
+    .theme-swatches{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 4px;}
+    .theme-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .12s,border-color .12s;}
+    .theme-swatch:hover{transform:scale(1.15);} .theme-swatch.active{border-color:var(--text);transform:scale(1.1);}
+    #report-header{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;}
+    .hdr-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-start;}
+    .hdr-center{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+    .hdr-title{font-size:17px;font-weight:900;letter-spacing:.2px;white-space:nowrap;}
+    .hdr-meta-row{display:flex;flex-direction:column;align-items:center;gap:4px;}
+    .hdr-chip{display:inline-block;font-size:11px;color:var(--text2);background:var(--chip-bg);border:1px solid var(--border);border-radius:999px;padding:3px 10px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;}
+    .hdr-rev{font-size:10px;color:var(--text4);font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+    .hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+    @media(max-width:860px){#report-header{grid-template-columns:1fr;justify-items:center;gap:12px;}.hdr-left,.hdr-right{justify-content:center;}}
+    .tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;}
+    .tab-btn{padding:10px 22px;border:none;background:none;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+    .tab-btn:hover{color:var(--accent);} .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-panel{display:none;} .tab-panel.active{display:block;}
+    .filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+    .filter-bar input[type=search],.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);}
+    .filter-bar input[type=search]{width:240px;}
+    .stats-label{font-size:12px;color:var(--text2);margin-left:auto;}
+    .resource-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;page-break-inside:avoid;break-inside:avoid;}
+    .resource-card-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border2);background:var(--surface2);flex-wrap:wrap;}
+    .resource-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;color:var(--text);}
+    .icon-m365{background:#e9f2ff;} .icon-teams{background:#ede7f6;} .icon-shared{background:#fff3e0;} .icon-distrib{background:#e8f5e9;} .icon-security{background:#fce4ec;} .icon-mailsec{background:#fff8e1;}
+    [data-theme$="-dark"] .icon-m365{background:#0e2d4a;} [data-theme$="-dark"] .icon-teams{background:#2a1a3e;} [data-theme$="-dark"] .icon-shared{background:#3a2200;} [data-theme$="-dark"] .icon-distrib{background:#0d2a0d;} [data-theme$="-dark"] .icon-security{background:#2d0a14;} [data-theme$="-dark"] .icon-mailsec{background:#2e2200;}
+    .resource-title{font-size:14px;font-weight:800;} .resource-email{font-size:11px;color:var(--text2);margin-top:1px;}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;}
+    .badge-m365{background:#cfe4ff;color:#0047b3;} .badge-teams{background:#ede7f6;color:#4a148c;} .badge-shared{background:#fff3e0;color:#e65100;} .badge-distrib{background:#e8f5e9;color:#1b5e20;} .badge-security{background:#fce4ec;color:#880e4f;} .badge-mailsec{background:#fff8e1;color:#f57f17;}
+    [data-theme$="-dark"] .badge-m365{background:#0e2d4a;color:#7ec4ff;} [data-theme$="-dark"] .badge-teams{background:#2a1a3e;color:#c4a0ff;} [data-theme$="-dark"] .badge-shared{background:#3a2200;color:#ffb066;} [data-theme$="-dark"] .badge-distrib{background:#0d2a0d;color:#6dbf6d;} [data-theme$="-dark"] .badge-security{background:#2d0a14;color:#ff8fa3;} [data-theme$="-dark"] .badge-mailsec{background:#2e2200;color:#ffd966;}
+    .activity-chip{margin-left:auto;font-size:11px;color:var(--text2);background:var(--chip-bg);border-radius:6px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
+    .activity-chip.stale{color:var(--stale-text);background:var(--stale-bg);} .activity-chip.recent{color:var(--fresh-text);background:var(--fresh-bg);}
+    .resource-body{padding:12px 16px;}
+    .person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px;margin-top:8px;}
+    .person-chip{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:8px;background:var(--chip-bg);font-size:12px;border:1px solid var(--border);}
+    .person-chip.owner-chip{background:#fff9e6;border-color:#f0d080;} [data-theme$="-dark"] .person-chip.owner-chip{background:#2e2200;border-color:#6b5200;}
+    .avatar{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .person-info{overflow:hidden;flex:1;}
+    .person-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+    .person-upn{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .status-flag{font-size:9px;padding:1px 5px;border-radius:5px;font-weight:900;text-transform:uppercase;flex-shrink:0;}
+    .status-blocked{background:var(--stale-bg);color:var(--stale-text);border:1px solid var(--stale-border);}
+    .status-shared{background:#fff3e0;color:#e65100;border:1px solid #f0c080;}
+    [data-theme$="-dark"] .status-shared{background:#3a2200;color:#ffb066;border-color:#8a5200;}
+    .status-unlicensed{background:var(--chip-bg);color:var(--text2);border:1px solid var(--border);}
+    .owner-star{font-size:10px;color:#c48a00;font-weight:900;flex-shrink:0;}
+    .section-label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-top:10px;margin-bottom:4px;}
+    .section-label:first-child{margin-top:0;}
+    .empty-note{font-size:12px;color:var(--text4);font-style:italic;}
+    .users-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--surface);}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead th{background:var(--surface2);padding:10px 12px;text-align:left;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.35px;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+    thead th:hover{background:var(--chip-bg);}
+    thead th .sort-arrow{margin-left:4px;font-size:10px;}
+    thead th.sort-asc .sort-arrow::after{content:' ▲';color:var(--accent);}
+    thead th.sort-desc .sort-arrow::after{content:' ▼';color:var(--accent);}
+    tbody tr{border-bottom:1px solid var(--border2);}
+    tbody tr:hover{background:var(--row-hover);}
+    tbody td{padding:9px 12px;vertical-align:middle;}
+    .user-name-cell{display:flex;align-items:center;gap:8px;}
+    .user-name-text{font-weight:800;} .user-upn-text{font-size:11px;color:var(--text3);}
+    .user-job{font-size:10px;color:var(--text3);margin-top:1px;}
+    .role-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+    .role-pill{font-size:9px;padding:1px 6px;border-radius:999px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+    .role-pill-admin{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+    .role-pill-global{background:#fde8e8;color:#9b1c1c;border:1px solid #fca5a5;}
+    .role-pill-standard{background:#e0f2fe;color:#075985;border:1px solid #bae6fd;}
+    [data-theme$="-dark"] .role-pill-admin{background:#3a2200;color:#fcd34d;border-color:#78350f;}
+    [data-theme$="-dark"] .role-pill-global{background:#2d1a1c;color:#fca5a5;border-color:#7a3a3e;}
+    [data-theme$="-dark"] .role-pill-standard{background:#0c2d48;color:#7dd3fc;border-color:#0369a1;}
+    .license-cell{display:flex;align-items:flex-start;gap:6px;flex-wrap:nowrap;}
+    .license-pills{display:flex;flex-wrap:wrap;gap:4px;flex:1;}
+    .license-pill{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--license-pill-bg);color:var(--license-pill-text);border:1px solid var(--license-pill-border);white-space:nowrap;}
+    .license-pill.unlicensed{background:var(--chip-bg);color:var(--text2);border-color:var(--border);}
+    .redundancy-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--stale-text);color:#fff;font-size:11px;font-weight:900;border:none;cursor:pointer;flex-shrink:0;transition:transform .1s;margin-top:1px;}
+    .redundancy-btn:hover{transform:scale(1.15);}
+    .redundancy-panel{display:none;background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:10px;padding:14px 16px;margin:4px 0 8px;font-size:12px;line-height:1.6;}
+    .redundancy-panel.open{display:block;}
+    .redundancy-panel-title{font-weight:900;color:var(--warn-text);margin-bottom:8px;font-size:12px;}
+    .redundancy-issue{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--warn-border);}
+    .redundancy-issue:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+    .redundancy-issue-title{font-weight:800;color:var(--warn-text);margin-bottom:2px;}
+    .redundancy-issue-desc{color:var(--text2);font-size:11px;}
+    .redundancy-recommendation{display:inline-block;margin-top:4px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;color:var(--accent);}
+    .redundancy-disclaimer{margin-top:10px;font-size:10px;color:var(--text4);font-style:italic;border-top:1px solid var(--warn-border);padding-top:8px;}
+    .signin-cell{white-space:nowrap;}
+    .signin-cell.never{color:var(--text4);font-style:italic;} .signin-cell.stale{color:var(--stale-text);} .signin-cell.recent{color:var(--fresh-text);}
+    .stale-bar-wrap{display:flex;align-items:center;gap:8px;min-width:130px;}
+    .stale-bar-bg{flex:1;height:6px;background:var(--border);border-radius:999px;overflow:hidden;}
+    .stale-bar-fill{height:100%;}
+    .stale-low .stale-bar-fill{background:#107c10;} .stale-medium .stale-bar-fill{background:#ca5010;} .stale-high .stale-bar-fill{background:#c50f1f;}
+    .stale-label{font-size:10px;font-weight:900;text-transform:uppercase;color:var(--text3);}
+    .id-cell{font-family:'Cascadia Code','Consolas',monospace;font-size:10px;color:var(--text4);}
+    @media print{
+      body{background:#fff;color:#000;}
+      #shell{padding:0;max-width:100%;}
+      #report-header,.tab-bar,.filter-bar,#capability-bar{display:none !important;}
+      .tab-panel{display:block !important;}
+      .resource-card{border:1px solid #ccc;margin-bottom:10px;}
+      .resource-card-header{background:#f5f5f5 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .redundancy-btn,.redundancy-panel{display:none !important;}
+    }
+    .hidden{display:none !important;}
+    .mt8{margin-top:8px;}
+  </style>
+</head>
+<body>
+<div id="shell">
+  <div id="loading-overlay"><div class="spinner"></div><div id="loading-msg">Initializing...</div></div>
+  <div id="signin-screen" class="hidden">
+    <h1>M365 Audit Report</h1>
+    <p>Sign in as a Global Admin to audit users, groups, shared mailboxes, and export findings.</p>
+    <button class="btn btn-primary" id="signin-btn">Sign in with Microsoft</button>
+    <div id="error-banner"></div>
+  </div>
+  <div id="report-screen" class="hidden">
+    <div id="report-header">
+      <div class="hdr-left">
+        <button class="btn btn-secondary" id="export-csv-btn">Export to Excel (CSV)</button>
+        <button class="btn btn-secondary" id="export-html-btn">Save Offline Dashboard</button>
+        <button class="btn btn-secondary" id="print-btn">Print</button>
+      </div>
+      <div class="hdr-center">
+        <div class="hdr-title">M365 Audit Report</div>
+        <div class="hdr-meta-row">
+          <span class="hdr-chip" id="meta-user"></span>
+          <span class="hdr-chip" id="meta-tenant"></span>
+        </div>
+        <div class="hdr-rev">rev 37</div>
+      </div>
+      <div class="hdr-right">
+        <div id="theme-picker-wrap">
+          <button class="btn-icon" id="theme-picker-btn">◑ Theme</button>
+          <div id="theme-picker-menu">
+            <div class="theme-picker-section">Light</div>
+            <div class="theme-swatches" id="swatches-light"></div>
+            <div class="theme-picker-section">Dark</div>
+            <div class="theme-swatches" id="swatches-dark"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="signout-btn">Sign out</button>
+      </div>
+    </div>
+
+    <!-- Capability degradation notice -->
+    <div id="capability-bar">
+      <span class="cap-close" id="cap-close-btn">✕</span>
+      <strong>ⓘ Reduced reporting — some data was unavailable for this tenant:</strong>
+      <ul id="capability-list"></ul>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="resources-panel">Resources</button>
+      <button class="tab-btn" data-tab="users-panel">Users</button>
+    </div>
+    <div id="resources-panel" class="tab-panel active">
+      <div class="filter-bar">
+        <input type="search" id="res-search" placeholder="Search by name or email..."/>
+        <select id="res-type-filter">
+          <option value="">All types</option>
+          <option value="Teams-enabled Group">Teams-enabled</option>
+          <option value="M365 Group">M365 Groups</option>
+          <option value="Shared Mailbox">Shared Mailboxes</option>
+          <option value="Distribution List">Distribution Lists</option>
+          <option value="Mail-enabled Security">Mail-enabled Security</option>
+          <option value="Security Group">Security Groups</option>
+        </select>
+        <span id="res-stats" class="stats-label"></span>
+      </div>
+      <div id="cards-container"></div>
+    </div>
+    <div id="users-panel" class="tab-panel">
+      <div class="filter-bar">
+        <input type="search" id="usr-search" placeholder="Search by name, email, role, or ID..."/>
+        <select id="usr-status-filter">
+          <option value="">All users</option>
+          <option value="admins">Admins only</option>
+          <option value="shared-mailbox">Shared mailboxes</option>
+          <option value="blocked">Sign-in blocked</option>
+          <option value="unlicensed">Unlicensed</option>
+          <option value="stale-high">High stale likelihood</option>
+          <option value="stale-medium">Medium stale likelihood</option>
+          <option value="never-signed-in">Never signed in</option>
+          <option value="redundant">Has redundant licenses</option>
+        </select>
+        <span id="usr-stats" class="stats-label"></span>
+      </div>
+      <div class="users-table-wrap">
+        <table id="users-table">
+          <thead><tr>
+            <th data-col="displayName">Name / Title <span class="sort-arrow"></span></th>
+            <th data-col="id">Object ID <span class="sort-arrow"></span></th>
+            <th data-col="accountEnabled">Status <span class="sort-arrow"></span></th>
+            <th data-col="licenses">Licenses <span class="sort-arrow"></span></th>
+            <th data-col="lastSignIn">Last Sign-in <span class="sort-arrow"></span></th>
+            <th data-col="staleness">Stale Likelihood <span class="sort-arrow"></span></th>
+          </tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="offline-payload"></script>
+<script>
+// ── Theme system ─────────────────────────────────────────────────────────────
+const THEMES=[
+  {id:'blue-light',    label:'Blue',    dark:false,swatch:'linear-gradient(135deg,#0078d4,#4da3e8)'},
+  {id:'midnight-light',label:'Midnight',dark:false,swatch:'linear-gradient(135deg,#0f4c81,#60a5fa)'},
+  {id:'forest-light',  label:'Forest',  dark:false,swatch:'linear-gradient(135deg,#15803d,#4ade80)'},
+  {id:'rose-light',    label:'Rose',    dark:false,swatch:'linear-gradient(135deg,#be185d,#f472b6)'},
+  {id:'amber-light',   label:'Amber',   dark:false,swatch:'linear-gradient(135deg,#b45309,#fcd34d)'},
+  {id:'slate-light',   label:'Slate',   dark:false,swatch:'linear-gradient(135deg,#334155,#94a3b8)'},
+  {id:'purple-light',  label:'Purple',  dark:false,swatch:'linear-gradient(135deg,#6d28d9,#c4b5fd)'},
+  {id:'blue-dark',     label:'Blue',    dark:true, swatch:'linear-gradient(135deg,#1a1a1e,#4da3e8)'},
+  {id:'midnight-dark', label:'Midnight',dark:true, swatch:'linear-gradient(135deg,#0f1419,#60a5fa)'},
+  {id:'forest-dark',   label:'Forest',  dark:true, swatch:'linear-gradient(135deg,#051f0f,#4ade80)'},
+  {id:'rose-dark',     label:'Rose',    dark:true, swatch:'linear-gradient(135deg,#1f0b17,#f472b6)'},
+  {id:'amber-dark',    label:'Amber',   dark:true, swatch:'linear-gradient(135deg,#1f1209,#fcd34d)'},
+  {id:'slate-dark',    label:'Slate',   dark:true, swatch:'linear-gradient(135deg,#0f172a,#94a3b8)'},
+  {id:'purple-dark',   label:'Purple',  dark:true, swatch:'linear-gradient(135deg,#1f0e42,#c4b5fd)'},
+];
+function applyTheme(id){
+  document.documentElement.setAttribute('data-theme',id);
+  localStorage.setItem('m365-theme',id);
+  document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.toggle('active',s.dataset.theme===id));
+}
+function buildSwatches(){
+  const lw=document.getElementById('swatches-light'),dw=document.getElementById('swatches-dark');
+  THEMES.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='theme-swatch';b.dataset.theme=t.id;b.title=t.label;b.style.background=t.swatch;
+    b.addEventListener('click',()=>{applyTheme(t.id);document.getElementById('theme-picker-menu').classList.remove('open');});
+    (t.dark?dw:lw).appendChild(b);
+  });
+}
+(function(){
+  const saved=localStorage.getItem('m365-theme');
+  let theme=saved&&THEMES.find(t=>t.id===saved)?saved:null;
+  if(!theme)theme=window.matchMedia('(prefers-color-scheme:dark)').matches?'blue-dark':'blue-light';
+  document.documentElement.setAttribute('data-theme',theme);
+})();
+
+const CLIENT_ID='d6d7b4b9-2826-4940-b6c2-5c3d9bc1b7fe';
+const SCOPES=['Group.Read.All','GroupMember.Read.All','User.Read.All','Reports.Read.All',
+              'MailboxSettings.Read','Team.ReadBasic.All','AuditLog.Read.All','Directory.Read.All'];
+
+// ── Capability degradation tracker ───────────────────────────────────────────
+// Each entry: { id, label, detail }
+// Added at runtime when a fallback fires. Rendered into #capability-bar.
+const degradedCapabilities=[];
+function recordDegradation(id,label,detail){
+  if(degradedCapabilities.some(c=>c.id===id))return;
+  degradedCapabilities.push({id,label,detail});
+}
+function renderCapabilityBar(){
+  if(!degradedCapabilities.length)return;
+  const list=document.getElementById('capability-list');
+  list.innerHTML=degradedCapabilities.map(c=>`<li><strong>${c.label}</strong> — ${c.detail}</li>`).join('');
+  document.getElementById('capability-bar').classList.add('visible');
+}
+
+// ── SKU table ────────────────────────────────────────────────────────────────
+const FULL_SKU_TABLE=`ProductName;LicensePartNumber;LicenseSKUID
+APP CONNECT IW;SPZA_IW;8f0c5670-4e56-4892-b06d-91c085d7004f
+Microsoft 365 Audio Conferencing;MCOMEETADV;0c266dff-15dd-4b49-8397-2bb16070ed52
+AZURE ACTIVE DIRECTORY BASIC;AAD_BASIC;2b9c8e7c-319c-43a2-a2a0-48c5c6161de7
+AZURE ACTIVE DIRECTORY PREMIUM P1;AAD_PREMIUM;078d2b04-f1bd-4111-bbd4-b4b1b354cef4
+AZURE ACTIVE DIRECTORY PREMIUM P2;AAD_PREMIUM_P2;84a661c4-e949-4bd2-a560-ed7766fcaf2b
+AZURE INFORMATION PROTECTION PLAN 1;RIGHTSMANAGEMENT;c52ea49f-fe5d-4e95-93ba-1de91d380f89
+DYNAMICS 365 CUSTOMER ENGAGEMENT PLAN ENTERPRISE EDITION;DYN365_ENTERPRISE_PLAN1;ea126fc5-a19e-42e2-a731-da9d437bffcf
+DYNAMICS 365 FOR CUSTOMER SERVICE ENTERPRISE EDITION;DYN365_ENTERPRISE_CUSTOMER_SERVICE;749742bf-0d37-4158-a120-33567104deeb
+DYNAMICS 365 FOR FINANCIALS BUSINESS EDITION;DYN365_FINANCIALS_BUSINESS_SKU;cc13a803-544e-4464-b4e4-6d6169a138fa
+DYNAMICS 365 FOR SALES AND CUSTOMER SERVICE ENTERPRISE EDITION;DYN365_ENTERPRISE_SALES_CUSTOMERSERVICE;8edc2cf8-6438-4fa9-b6e3-aa1660c640cc
+DYNAMICS 365 FOR SALES ENTERPRISE EDITION;DYN365_ENTERPRISE_SALES;1e1a282c-9c54-43a2-9310-98ef728faace
+DYNAMICS 365 FOR TEAM MEMBERS ENTERPRISE EDITION;DYN365_ENTERPRISE_TEAM_MEMBERS;8e7a3d30-d97d-43ab-837c-d7701cef83dc
+DYNAMICS 365 UNF OPS PLAN ENT EDITION;Dynamics_365_for_Operations;ccba3cfe-71ef-423a-bd87-b6df3dce59a9
+ENTERPRISE MOBILITY + SECURITY E3;EMS;efccb6f7-5641-4e0e-bd10-b4976e1bf68e
+ENTERPRISE MOBILITY + SECURITY E5;EMSPREMIUM;b05e124f-c7cc-45a0-a6aa-8cf78c946968
+EXCHANGE ONLINE (PLAN 1);EXCHANGESTANDARD;4b9405b0-7788-4568-add1-99614e613b69
+EXCHANGE ONLINE (PLAN 2);EXCHANGEENTERPRISE;19ec0d23-8335-4cbd-94ac-6050e30712fa
+EXCHANGE ONLINE ARCHIVING FOR EXCHANGE ONLINE;EXCHANGEARCHIVE_ADDON;ee02fd1b-340e-4a4b-b355-4a514e4c8943
+EXCHANGE ONLINE ARCHIVING FOR EXCHANGE SERVER;EXCHANGEARCHIVE;90b5e015-709a-4b8b-b08e-3200f994494c
+EXCHANGE ONLINE ESSENTIALS;EXCHANGEESSENTIALS;7fc0182e-d107-4556-8329-7caaa511197b
+EXCHANGE ONLINE ESSENTIALS;EXCHANGE_S_ESSENTIALS;e8f81a67-bd96-4074-b108-cf193eb9433b
+EXCHANGE ONLINE KIOSK;EXCHANGEDESKLESS;80b2d799-d2ba-4d2a-8842-fb0d0f3a4b82
+EXCHANGE ONLINE POP;EXCHANGETELCO;cb0a98a8-11bc-494c-83d9-c1b1ac65327e
+INTUNE;INTUNE_A;061f9ace-7d42-4136-88ac-31dc755f143f
+Microsoft 365 A1;M365EDU_A1;b17653a4-2443-4e8c-a550-18249dda78bb
+Microsoft 365 A3 for faculty;M365EDU_A3_FACULTY;4b590615-0888-425a-a965-b3bf7789848d
+Microsoft 365 A3 for students;M365EDU_A3_STUDENT;7cfd9a2b-e110-4c39-bf20-c6a3f36a3121
+Microsoft 365 A5 for faculty;M365EDU_A5_FACULTY;e97c048c-37a4-45fb-ab50-922fbf07a370
+Microsoft 365 A5 for students;M365EDU_A5_STUDENT;46c119d4-0379-4a9d-85e4-97c66d3f909e
+MICROSOFT 365 APPS FOR BUSINESS;O365_BUSINESS;cdd28e44-67e3-425e-be4c-737fab2899d3
+MICROSOFT 365 APPS FOR BUSINESS;SMB_BUSINESS;b214fe43-f5a3-4703-beeb-fa97188220fc
+MICROSOFT 365 APPS FOR ENTERPRISE;OFFICESUBSCRIPTION;c2273bd0-dff7-4215-9ef5-2c7bcfb06425
+MICROSOFT 365 BUSINESS BASIC;O365_BUSINESS_ESSENTIALS;3b555118-da6a-4418-894f-7df1e2096870
+MICROSOFT 365 BUSINESS BASIC;SMB_BUSINESS_ESSENTIALS;dab7782a-93b1-4074-8bb1-0e61318bea0b
+MICROSOFT 365 BUSINESS STANDARD;O365_BUSINESS_PREMIUM;f245ecc8-75af-4f8e-b61f-27d8114de5f3
+MICROSOFT 365 BUSINESS STANDARD;SMB_BUSINESS_PREMIUM;ac5cef5d-921b-4f97-9ef3-c99076e5470f
+MICROSOFT 365 BUSINESS PREMIUM;SPB;cbdc14ab-d96c-4c30-b9f4-6ada7cdc1d46
+MICROSOFT 365 E3;SPE_E3;05e9a617-0261-4cee-bb44-138d3ef5d965
+Microsoft 365 E5;SPE_E5;06ebc4ee-1bb5-47dd-8120-11324bc54e06
+Microsoft 365 E3_USGOV_DOD;SPE_E3_USGOV_DOD;d61d61cc-f992-433f-a577-5bd016037eeb
+Microsoft 365 E3_USGOV_GCCHIGH;SPE_E3_USGOV_GCCHIGH;ca9d1dd9-dfe9-4fef-b97c-9bc1ea3c3658
+Microsoft 365 E5 Compliance;INFORMATION_PROTECTION_COMPLIANCE;184efa21-98c3-4e5d-95ab-d07053a96e67
+Microsoft 365 E5 Security;IDENTITY_THREAT_PROTECTION;26124093-3d78-432b-b5dc-48bf992543d5
+Microsoft 365 E5 Security for EMS E5;IDENTITY_THREAT_PROTECTION_FOR_EMS_E5;44ac31e7-2999-4304-ad94-c948886741d4
+Microsoft 365 F1;M365_F1;44575883-256e-4a79-9da4-ebe9acabe2b2
+Microsoft 365 F3;SPE_F1;66b55226-6b4f-492c-910c-a3b7a3c9d993
+MICROSOFT FLOW FREE;FLOW_FREE;f30db892-07e9-47e9-837c-80727f46fd3d
+MICROSOFT 365 PHONE SYSTEM;MCOEV;e43b5b99-8dfb-405f-9987-dc307f34bcbd
+MICROSOFT 365 PHONE SYSTEM FOR DOD;MCOEV_DOD;d01d9287-694b-44f3-bcc5-ada78c8d953e
+MICROSOFT 365 PHONE SYSTEM FOR FACULTY;MCOEV_FACULTY;d979703c-028d-4de5-acbf-7955566b69b9
+MICROSOFT 365 PHONE SYSTEM FOR GCC;MCOEV_GOV;a460366a-ade7-4791-b581-9fbff1bdaa85
+MICROSOFT 365 PHONE SYSTEM FOR GCCHIGH;MCOEV_GCCHIGH;7035277a-5e49-4abc-a24f-0ec49c501bb5
+MICROSOFT 365 PHONE SYSTEM FOR SMALL AND MEDIUM BUSINESS;MCOEVSMB_1;aa6791d3-bb09-4bc2-afed-c30c3fe26032
+MICROSOFT 365 PHONE SYSTEM FOR STUDENTS;MCOEV_STUDENT;1f338bbc-767e-4a1e-a2d4-b73207cc5b93
+MICROSOFT 365 PHONE SYSTEM FOR TELSTRA;MCOEV_TELSTRA;ffaf2d68-1c95-4eb3-9ddd-59b81fba0f61
+MICROSOFT 365 PHONE SYSTEM_USGOV_DOD;MCOEV_USGOV_DOD;b0e7de67-e503-4934-b729-53d595ba5cd1
+MICROSOFT 365 PHONE SYSTEM_USGOV_GCCHIGH;MCOEV_USGOV_GCCHIGH;985fcb26-7b94-475b-b512-89356697be71
+Microsoft Defender Advanced Threat Protection;WIN_DEF_ATP;111046dd-295b-4d6d-9724-d52ac90bd1f2
+MICROSOFT DYNAMICS CRM ONLINE BASIC;CRMPLAN2;906af65a-2970-46d5-9b58-4e9aa50f0657
+MICROSOFT DYNAMICS CRM ONLINE;CRMSTANDARD;d17b27af-3f49-4822-99f9-56a661538792
+MS IMAGINE ACADEMY;IT_ACADEMY_AD;ba9a34de-4489-469d-879c-0f0f145321cd
+MICROSOFT TEAM (FREE);TEAMS_FREE;16ddbbfc-09ea-4de2-b1d7-312db6112d70
+Office 365 A5 for faculty;ENTERPRISEPREMIUM_FACULTY;a4585165-0533-458a-97e3-c400570268c4
+Office 365 A5 for students;ENTERPRISEPREMIUM_STUDENT;ee656612-49fa-43e5-b67e-cb1fdf7699df
+Office 365 Advanced Compliance;EQUIVIO_ANALYTICS;1b1b1f7a-8355-43b6-829f-336cfccb744c
+Office 365 Advanced Threat Protection (Plan 1);ATP_ENTERPRISE;4ef96642-f096-40de-a3e9-d83fb2f90211
+OFFICE 365 E1;STANDARDPACK;18181a46-0d4e-45cd-891e-60aabd171b4e
+OFFICE 365 E2;STANDARDWOFFPACK;6634e0ce-1a9f-428c-a498-f84ec7b8aa2e
+OFFICE 365 E3;ENTERPRISEPACK;6fd2c87f-b296-42f0-b197-1e91e994b900
+OFFICE 365 E3 DEVELOPER;DEVELOPERPACK;189a915c-fe4f-4ffa-bde4-85b9628d07a0
+Office 365 E3_USGOV_DOD;ENTERPRISEPACK_USGOV_DOD;b107e5a3-3e60-4c0d-a184-a7e4395eb44c
+Office 365 E3_USGOV_GCCHIGH;ENTERPRISEPACK_USGOV_GCCHIGH;aea38a85-9bd5-4981-aa00-616b411205bf
+OFFICE 365 E4;ENTERPRISEWITHSCAL;1392051d-0cb9-4b7a-88d5-621fee5e8711
+OFFICE 365 E5;ENTERPRISEPREMIUM;c7df2760-2c81-4ef7-b578-5b5392b571df
+OFFICE 365 E5 WITHOUT AUDIO CONFERENCING;ENTERPRISEPREMIUM_NOPSTNCONF;26d45bd9-adf1-46cd-a9e1-51e9a5524128
+OFFICE 365 F1;DESKLESSPACK;4b585984-651b-448a-9e53-3b10f069cf7f
+OFFICE 365 F3;DESKLESSPACK;4b585984-651b-448a-9e53-3b10f069cf7f
+OFFICE 365 MIDSIZE BUSINESS;MIDSIZEPACK;04a7fb0d-32e0-4241-b4f5-3f7618cd1162
+OFFICE 365 SMALL BUSINESS;LITEPACK;bd09678e-b83c-4d3f-aaba-3dad4abd128b
+OFFICE 365 SMALL BUSINESS PREMIUM;LITEPACK_P2;fc14ec4a-4169-49a4-a51e-2c852931814b
+ONEDRIVE FOR BUSINESS (PLAN 1);WACONEDRIVESTANDARD;e6778190-713e-4e4f-9119-8b8238de25df
+ONEDRIVE FOR BUSINESS (PLAN 2);WACONEDRIVEENTERPRISE;ed01faf2-1d88-4947-ae91-45ca18703a96
+POWER APPS PER USER PLAN;POWERAPPS_PER_USER;b30411f5-fea1-4a59-9ad9-3db7c7ead579
+POWER BI (FREE);POWER_BI_STANDARD;a403ebcc-fae0-4ca2-8c8c-7a907fd6c235
+POWER BI FOR OFFICE 365 ADD-ON;POWER_BI_ADDON;45bc2c81-6072-436a-9b0b-3b12eefbc402
+POWER BI PRO;POWER_BI_PRO;f8a1db68-be16-40ed-86d5-cb42ce701560
+PROJECT FOR OFFICE 365;PROJECTCLIENT;a10d5e58-74da-4312-95c8-76be4e5b75a0
+PROJECT ONLINE ESSENTIALS;PROJECTESSENTIALS;776df282-9fc0-4862-99e2-70e561b9909e
+PROJECT ONLINE PREMIUM;PROJECTPREMIUM;09015f9f-377f-4538-bbb5-f75ceb09358a
+PROJECT ONLINE PREMIUM WITHOUT PROJECT CLIENT;PROJECTONLINE_PLAN_1;2db84718-652c-47a7-860c-f10d8abbdae3
+PROJECT ONLINE PROFESSIONAL;PROJECTPROFESSIONAL;53818b1b-4a27-454b-8896-0dba576410e6
+PROJECT ONLINE WITH PROJECT FOR OFFICE 365;PROJECTONLINE_PLAN_2;f82a60b8-1ee3-4cfb-a4fe-1c6a53c2656c
+SHAREPOINT ONLINE (PLAN 1);SHAREPOINTSTANDARD;1fc08a02-8b3d-43b9-831e-f76859e04e1a
+SHAREPOINT ONLINE (PLAN 2);SHAREPOINTENTERPRISE;a9732ec9-17d9-494c-a51c-d6b45b384dcb
+SKYPE FOR BUSINESS ONLINE (PLAN 1);MCOIMP;b8b749f8-a4ef-4887-9539-c95b1eaa5db7
+SKYPE FOR BUSINESS ONLINE (PLAN 2);MCOSTANDARD;d42c793f-6c78-4f43-92ca-e8f6a02b035f
+SKYPE FOR BUSINESS PSTN DOMESTIC AND INTERNATIONAL CALLING;MCOPSTN2;d3b4fe1f-9992-4930-8acb-ca6ec609365e
+SKYPE FOR BUSINESS PSTN DOMESTIC CALLING;MCOPSTN1;0dab259f-bf13-4952-b7f8-7db8f131b28d
+SKYPE FOR BUSINESS PSTN DOMESTIC CALLING (120 Minutes);MCOPSTN5;54a152dc-90de-4996-93d2-bc47e670fc06
+VISIO ONLINE PLAN 1;VISIOONLINE_PLAN1;4b244418-9658-4451-a2b8-b5e2b364e9bd
+VISIO Online Plan 2;VISIOCLIENT;c5928f49-12ba-48f7-ada3-0d743a3601d5
+WINDOWS 10 ENTERPRISE E3;WIN10_PRO_ENT_SUB;cb10e6cd-9da4-4992-867b-67546b1db821
+Windows 10 Enterprise E5;WIN10_VDA_E5;488ba24a-39a9-4473-8ee5-19291e71b002
+WINDOWS STORE FOR BUSINESS;WINDOWS_STORE;6470687e-a428-4b7a-bef2-8a291ad947c9`;
+
+const GUID_TO_PART=(()=>{const m=Object.create(null);FULL_SKU_TABLE.split('\n').slice(1).forEach(l=>{const p=l.trim().split(';');if(p.length>=3)m[p[2].trim().toLowerCase()]=p[1].trim();});return m;})();
+const SKU_GUID_TO_NAME=(()=>{const m=Object.create(null);FULL_SKU_TABLE.split('\n').slice(1).forEach(l=>{const p=l.trim().split(';');if(p.length>=3)m[p[2].trim().toLowerCase()]=p[0].trim();});return m;})();
+
+// ── Redundancy engine ────────────────────────────────────────────────────────
+const C={TEAMS:'t',EXO_P1:'e1',EXO_P2:'e2',SPO_P1:'s1',SPO_P2:'s2',OD_P1:'o1',OD_P2:'o2',
+  OFFICE_WEB:'ow',OFFICE_DESKTOP:'od',FLOW_CLOUD:'fc',FLOW_FULL:'ff',PBI_FREE:'pf',PBI_PRO:'pp',
+  ENTRA_P1:'ap1',ENTRA_P2:'ap2',INTUNE:'in',AIP_P1:'ai',DEFENDER_O365_P1:'d1',
+  DEFENDER_O365_P2:'d2',DEFENDER_EP2:'de2',DEFENDER_IDENTITY:'di',WINDOWS_ENT:'we',
+  AUDIO_CONF:'ac',PHONE_SYSTEM:'ps'};
+const PLAN_CAPS={
+  'O365_BUSINESS_ESSENTIALS':new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.FLOW_CLOUD]),
+  'SMB_BUSINESS_ESSENTIALS': new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.FLOW_CLOUD]),
+  'O365_BUSINESS_PREMIUM':   new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.OFFICE_DESKTOP,C.FLOW_CLOUD]),
+  'SMB_BUSINESS_PREMIUM':    new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.OFFICE_DESKTOP,C.FLOW_CLOUD]),
+  'SPB':new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.OFFICE_DESKTOP,C.FLOW_CLOUD,C.ENTRA_P1,C.INTUNE,C.AIP_P1,C.DEFENDER_O365_P1,C.WINDOWS_ENT]),
+  'STANDARDPACK':new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.FLOW_CLOUD]),
+  'SPE_E3':new Set([C.TEAMS,C.EXO_P1,C.EXO_P2,C.SPO_P1,C.SPO_P2,C.OD_P1,C.OD_P2,C.OFFICE_WEB,C.OFFICE_DESKTOP,C.FLOW_CLOUD,C.FLOW_FULL,C.ENTRA_P1,C.INTUNE,C.AIP_P1,C.DEFENDER_O365_P1,C.WINDOWS_ENT]),
+  'SPE_E5':new Set([C.TEAMS,C.EXO_P1,C.EXO_P2,C.SPO_P1,C.SPO_P2,C.OD_P1,C.OD_P2,C.OFFICE_WEB,C.OFFICE_DESKTOP,C.FLOW_CLOUD,C.FLOW_FULL,C.ENTRA_P1,C.ENTRA_P2,C.INTUNE,C.AIP_P1,C.DEFENDER_O365_P2,C.DEFENDER_EP2,C.DEFENDER_IDENTITY,C.AUDIO_CONF,C.PHONE_SYSTEM,C.PBI_PRO,C.WINDOWS_ENT]),
+  'M365_F1':new Set([C.TEAMS,C.SPO_P1,C.INTUNE]),
+  'SPE_F1': new Set([C.TEAMS,C.EXO_P1,C.SPO_P1,C.OD_P1,C.OFFICE_WEB,C.FLOW_CLOUD,C.INTUNE]),
+  'FLOW_FREE':new Set([C.FLOW_CLOUD]),'POWER_BI_STANDARD':new Set([C.PBI_FREE]),'POWER_BI_PRO':new Set([C.PBI_FREE,C.PBI_PRO]),
+  'EXCHANGESTANDARD':new Set([C.EXO_P1]),'INTUNE_A':new Set([C.INTUNE]),'AAD_PREMIUM':new Set([C.ENTRA_P1]),
+  'AAD_PREMIUM_P2':new Set([C.ENTRA_P1,C.ENTRA_P2]),'RIGHTSMANAGEMENT':new Set([C.AIP_P1]),
+  'MCOMEETADV':new Set([C.AUDIO_CONF]),'MCOEV':new Set([C.PHONE_SYSTEM]),'WIN10_PRO_ENT_SUB':new Set([C.WINDOWS_ENT]),
+  'OFFICESUBSCRIPTION':new Set([C.OFFICE_WEB,C.OFFICE_DESKTOP]),
+  'IDENTITY_THREAT_PROTECTION':new Set([C.ENTRA_P2,C.DEFENDER_EP2,C.DEFENDER_O365_P2,C.DEFENDER_IDENTITY]),
+};
+const HIERARCHY_RULES=[
+  {id:'biz-basic-overlap',redPlans:['O365_BUSINESS_ESSENTIALS','SMB_BUSINESS_ESSENTIALS'],covPlans:['O365_BUSINESS_PREMIUM','SMB_BUSINESS_PREMIUM','SPB','SPE_E3','SPE_E5'],title:'Microsoft 365 Business Basic is redundant',desc:'A higher plan already assigned covers all Business Basic features.',rec:'Remove Microsoft 365 Business Basic.'},
+  {id:'biz-std-overlap',redPlans:['O365_BUSINESS_PREMIUM','SMB_BUSINESS_PREMIUM'],covPlans:['SPB','SPE_E3','SPE_E5'],title:'Microsoft 365 Business Standard is redundant',desc:'A higher plan (Business Premium or E3/E5) already covers all Business Standard features.',rec:'Remove Microsoft 365 Business Standard.'},
+  {id:'biz-prem-overlap',redPlans:['SPB'],covPlans:['SPE_E3','SPE_E5'],title:'Microsoft 365 Business Premium is redundant alongside E3/E5',desc:'M365 E3 or E5 supersedes Business Premium in all capabilities.',rec:'Remove Microsoft 365 Business Premium.'},
+  {id:'e3-overlap',redPlans:['SPE_E3'],covPlans:['SPE_E5'],title:'Microsoft 365 E3 is redundant alongside E5',desc:'M365 E5 is a full superset of E3.',rec:'Remove Microsoft 365 E3.'},
+  {id:'f1-overlap',redPlans:['M365_F1'],covPlans:['SPE_F1','SPB','SPE_E3','SPE_E5'],title:'Microsoft 365 F1 is redundant',desc:'A higher plan already covers all F1 features.',rec:'Remove Microsoft 365 F1.'},
+];
+const ADDON_SKUS=['FLOW_FREE','POWER_BI_STANDARD','POWER_BI_PRO','EXCHANGESTANDARD','INTUNE_A','AAD_PREMIUM','AAD_PREMIUM_P2','RIGHTSMANAGEMENT','MCOMEETADV','MCOEV','WIN10_PRO_ENT_SUB','OFFICESUBSCRIPTION','IDENTITY_THREAT_PROTECTION'];
+function getUserCaps(ps){const u=new Set();ps.forEach(p=>{const c=PLAN_CAPS[p];if(c)c.forEach(x=>u.add(x));});return u;}
+function isSubset(a,b){for(const x of a)if(!b.has(x))return false;return true;}
+function detectRedundancies(user){
+  const parts=new Set();(user.assignedLicenses||[]).forEach(l=>{const p=GUID_TO_PART[(l.skuId||'').toLowerCase()];if(p)parts.add(p);});
+  const issues=[];
+  for(const r of HIERARCHY_RULES){if(r.redPlans.some(p=>parts.has(p))&&r.covPlans.some(p=>parts.has(p)))issues.push({id:r.id,title:r.title,desc:r.desc,recommendation:r.rec});}
+  for(const sk of ADDON_SKUS){
+    if(!parts.has(sk))continue;const addonCaps=PLAN_CAPS[sk];if(!addonCaps)continue;
+    const otherCaps=getUserCaps(new Set([...parts].filter(p=>p!==sk)));
+    if(isSubset(addonCaps,otherCaps)){const row=FULL_SKU_TABLE.split('\n').find(l=>l.includes(';'+sk+';'));const name=row?row.split(';')[0]:'License '+sk;issues.push({id:'addon-'+sk,title:`${name} is redundant`,desc:'Every feature this license provides is already included in another assigned plan.',recommendation:`Remove the standalone ${name} license.`});}
+  }
+  return issues;
+}
+
+// ── Role classification ───────────────────────────────────────────────────────
+const GLOBAL_ADMIN_NAMES=['Global Administrator','Company Administrator'];
+const ELEVATED_ADMIN_KEYWORDS=['Administrator','Admin'];
+function roleClass(roleName){
+  if(GLOBAL_ADMIN_NAMES.some(n=>roleName===n))return'role-pill-global';
+  if(ELEVATED_ADMIN_KEYWORDS.some(k=>roleName.includes(k)))return'role-pill-admin';
+  return'role-pill-standard';
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let allResources=[],allUsers=[],userSortCol='staleness',userSortDir='desc';
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function show(id){['signin-screen','report-screen'].forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));}
+function setLoading(on,msg){document.getElementById('loading-overlay').classList.toggle('hidden',!on);if(msg)document.getElementById('loading-msg').textContent=msg;}
+function showError(msg){const b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg;}
+function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');}
+function daysSince(d){if(!d)return null;const ms=Date.now()-new Date(d).getTime();return isNaN(ms)?null:Math.floor(ms/86400000);}
+function initials(n){if(!n)return'?';const p=n.trim().split(/\s+/);return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+function avatarColor(n){const pal=['#0078d4','#107c10','#c50f1f','#8764b8','#ca5010','#038387'];let h=0;for(const c of(n||''))h=(h*31+c.charCodeAt(0))&0xffffffff;return pal[Math.abs(h)%pal.length];}
+function csvEsc(s){return'"'+String(s||'').replace(/"/g,'""')+'"';}
+function downloadFile(content,filename,type){const b=new Blob([content],{type}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);}
+function resolveName(skuId){return SKU_GUID_TO_NAME[(skuId||'').toLowerCase()]||`Unknown (${skuId})`;}
+function bakeUserLicenses(u){u._licenseNames=(u.assignedLicenses||[]).map(l=>resolveName(l.skuId));u._redundancies=detectRedundancies(u);return u;}
+function inferSharedMailbox(u){return u.accountEnabled===false&&(u.assignedLicenses||[]).length===0&&(u.userType||'Member')==='Member';}
+function stalenessScore(user){
+  if(user._isSharedMailbox)return{score:0,tier:'low',label:'N/A'};
+  let s=0;if(user.accountEnabled===false)s+=35;if(!(user.assignedLicenses&&user.assignedLicenses.length))s+=20;
+  const ls=user.signInActivity?.lastSuccessfulSignInDateTime||user.signInActivity?.lastSignInDateTime;
+  if(!ls)s+=30;else{const d=daysSince(ls);if(d>180)s+=25;else if(d>90)s+=15;else if(d>30)s+=5;}
+  s=Math.min(s,100);return{score:s,tier:s>=60?'high':s>=30?'medium':'low',label:s>=60?'High':s>=30?'Medium':'Low'};
+}
+
+// ── Resource rendering ───────────────────────────────────────────────────────
+function typeStyle(t){return({'Teams-enabled Group':{badge:'badge-teams',icon:'icon-teams',txt:'T'},'M365 Group':{badge:'badge-m365',icon:'icon-m365',txt:'M'},'Shared Mailbox':{badge:'badge-shared',icon:'icon-shared',txt:'S'},'Distribution List':{badge:'badge-distrib',icon:'icon-distrib',txt:'D'},'Mail-enabled Security':{badge:'badge-mailsec',icon:'icon-mailsec',txt:'MS'},'Security Group':{badge:'badge-security',icon:'icon-security',txt:'SG'}})[t]||{badge:'badge-m365',icon:'icon-m365',txt:'G'};}
+function activityChipHtml(la){const d=daysSince(la);if(d===null)return'<span class="activity-chip">No activity data</span>';const cls=d>90?'stale':d<14?'recent':'';return`<span class="activity-chip ${cls}">${d===0?'Active today':d===1?'Active yesterday':`Last active ${d}d ago`}</span>`;}
+function personChipHtml(p,isOwner){const upn=p.userPrincipalName||p.mail||'';let f='';if(p.accountEnabled===false)f+='<span class="status-flag status-blocked">Blocked</span>';if(p.assignedLicenses&&p.assignedLicenses.length===0)f+='<span class="status-flag status-unlicensed">Unlicensed</span>';return`<div class="person-chip${isOwner?' owner-chip':''}"><div class="avatar" style="background:${avatarColor(p.displayName)}">${initials(p.displayName)}</div><div class="person-info"><div class="person-name">${esc(p.displayName||upn)} ${f}</div><div class="person-upn">${esc(upn)}</div></div>${isOwner?'<span class="owner-star">(Owner)</span>':''}</div>`;}
+function renderCard(res){const s=typeStyle(res.type),oids=new Set((res.owners||[]).map(o=>o.id)),nom=(res.members||[]).filter(m=>!oids.has(m.id)),oh=(res.owners||[]).length?res.owners.map(p=>personChipHtml(p,true)).join(''):'<span class="empty-note">No owners listed</span>',mh=nom.length?nom.map(p=>personChipHtml(p,false)).join(''):res.delegatesNote?'<span class="empty-note">Shared mailbox — delegates not available via Graph API.</span>':'<span class="empty-note">No members</span>';return`<div class="resource-card"><div class="resource-card-header"><div class="resource-icon ${s.icon}">${s.txt}</div><div><div class="resource-title">${esc(res.displayName)}</div><div class="resource-email">${esc(res.mail||'')}${res.description?' — '+esc(res.description.slice(0,80)):''}</div></div><span class="badge ${s.badge}">${esc(res.type)}</span><span style="font-size:11px;color:var(--text3);">(${(res.members||[]).length} members)</span>${activityChipHtml(res.lastActivity)}</div><div class="resource-body"><div class="section-label">Owners</div><div class="person-grid">${oh}</div><div class="section-label mt8">Members</div><div class="person-grid">${mh}</div></div></div>`;}
+function renderResources(){
+  const search=(document.getElementById('res-search').value||'').toLowerCase(),tf=document.getElementById('res-type-filter').value;
+  const typeOrder=['Teams-enabled Group','M365 Group','Shared Mailbox','Distribution List','Mail-enabled Security','Security Group','Group'];
+  const filtered=allResources.filter(r=>(!tf||r.type===tf)&&(!search||(r.displayName||'').toLowerCase().includes(search)||(r.mail||'').toLowerCase().includes(search))).sort((a,b)=>{const d=typeOrder.indexOf(a.type)-typeOrder.indexOf(b.type);return d||((a.displayName||'').localeCompare(b.displayName||''));});
+  document.getElementById('cards-container').innerHTML=filtered.length?filtered.map(renderCard).join(''):'<p style="color:var(--text4);text-align:center;padding:40px;">No resources match your filter.</p>';
+  document.getElementById('res-stats').textContent=`Showing ${filtered.length} of ${allResources.length} resources`;
+}
+
+// ── User rendering ───────────────────────────────────────────────────────────
+function formatSignInDate(user){const dt=user.signInActivity?.lastSuccessfulSignInDateTime||user.signInActivity?.lastSignInDateTime;if(!dt)return{label:'Never',cls:'never'};const d=daysSince(dt),label=new Date(dt).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});return{label:`${label} (${d}d ago)`,cls:d>90?'stale':d<14?'recent':''};}
+function buildRedundancyPanel(reds,uid){return`<div class="redundancy-panel" id="rp-${esc(uid)}"><div class="redundancy-panel-title">⚠ License Redundancy Detected (${reds.length} issue${reds.length>1?'s':''})</div>${reds.map(r=>`<div class="redundancy-issue"><div class="redundancy-issue-title">${esc(r.title)}</div><div class="redundancy-issue-desc">${esc(r.desc)}</div><span class="redundancy-recommendation">➔ ${esc(r.recommendation)}</span></div>`).join('')}<div class="redundancy-disclaimer">ⓘ Accurate as of Q2 2026 per Microsoft published service descriptions. Verify at microsoft.com/licensing before making changes.</div></div>`;}
+function renderUserRow(user){
+  const si=formatSignInDate(user),st=stalenessScore(user),upn=user.userPrincipalName||user.mail||'';
+  const reds=user._redundancies||[],isShared=!!user._isSharedMailbox,roles=user._roles||[];
+  let sHtml=isShared?'<span class="status-flag status-shared">Shared Mailbox</span>':user.accountEnabled===false?'<span class="status-flag status-blocked">Blocked</span>':'<span style="color:var(--fresh-text);font-weight:900;">Active</span>';
+  const titleLine=(user.jobTitle||user.department)?`<div class="user-job">${esc([user.jobTitle,user.department].filter(Boolean).join(' · '))}</div>`:'';
+  const rolePillsHtml=roles.length?`<div class="role-pills">${roles.map(r=>`<span class="role-pill ${roleClass(r)}" title="${esc(r)}">${esc(r)}</span>`).join('')}</div>`:'';
+  const licHtml=(user._licenseNames||[]).length?(user._licenseNames).map(n=>`<span class="license-pill">${esc(n)}</span>`).join(''):'<span class="license-pill unlicensed">Unlicensed</span>';
+  const staleCell=isShared?'<span style="color:var(--text4);font-size:11px;">N/A</span>':`<div class="stale-bar-wrap stale-${st.tier}"><div class="stale-bar-bg"><div class="stale-bar-fill" style="width:${st.score}%"></div></div><span class="stale-label">${st.label}</span></div>`;
+  return`<tr data-uid="${esc(user.id)}"${isShared?' style="opacity:.82;"':''}>
+    <td><div class="user-name-cell"><div class="avatar" style="background:${isShared?'#8a6a00':avatarColor(user.displayName)}">${isShared?'✉':initials(user.displayName)}</div><div><div class="user-name-text">${esc(user.displayName||upn)}</div><div class="user-upn-text">${esc(upn)}</div>${titleLine}${rolePillsHtml}</div></div></td>
+    <td class="id-cell" title="${esc(user.id)}">${esc(user.id)}</td><td>${sHtml}</td>
+    <td><div class="license-cell"><div class="license-pills">${licHtml}</div>${reds.length?`<button class="redundancy-btn" data-uid="${esc(user.id)}">!</button>`:''}</div></td>
+    <td class="signin-cell ${si.cls}">${esc(si.label)}</td>
+    <td>${staleCell}</td>
+  </tr>${reds.length?`<tr class="redundancy-row"><td colspan="6" style="padding:0 12px;">${buildRedundancyPanel(reds,user.id)}</td></tr>`:''}`;
+}
+function renderUsers(){
+  const search=(document.getElementById('usr-search').value||'').toLowerCase(),sf=document.getElementById('usr-status-filter').value;
+  let filtered=allUsers.filter(u=>{
+    const upn=(u.userPrincipalName||u.mail||'').toLowerCase(),roleStr=(u._roles||[]).join(' ').toLowerCase();
+    if(search&&!(u.displayName||'').toLowerCase().includes(search)&&!upn.includes(search)&&!(u.id||'').toLowerCase().includes(search)&&!(u.jobTitle||'').toLowerCase().includes(search)&&!(u.department||'').toLowerCase().includes(search)&&!roleStr.includes(search))return false;
+    if(sf==='admins'&&!(u._roles||[]).length)return false;
+    if(sf==='shared-mailbox'&&!u._isSharedMailbox)return false;
+    if(sf==='blocked'&&(u.accountEnabled!==false||u._isSharedMailbox))return false;
+    if(sf==='unlicensed'&&(u.assignedLicenses||[]).length>0)return false;
+    if(sf==='never-signed-in'&&(u.signInActivity?.lastSignInDateTime||u.signInActivity?.lastSuccessfulSignInDateTime))return false;
+    if(sf==='stale-high'&&stalenessScore(u).tier!=='high')return false;
+    if(sf==='stale-medium'&&stalenessScore(u).tier!=='medium')return false;
+    if(sf==='redundant'&&!(u._redundancies||[]).length)return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    let av,bv;
+    if(userSortCol==='displayName'){av=(a.displayName||'').toLowerCase();bv=(b.displayName||'').toLowerCase();}
+    else if(userSortCol==='id'){av=a.id||'';bv=b.id||'';}
+    else if(userSortCol==='accountEnabled'){av=a.accountEnabled===false?0:1;bv=b.accountEnabled===false?0:1;}
+    else if(userSortCol==='licenses'){av=(a.assignedLicenses||[]).length;bv=(b.assignedLicenses||[]).length;}
+    else if(userSortCol==='lastSignIn'){const da=a.signInActivity?.lastSuccessfulSignInDateTime||a.signInActivity?.lastSignInDateTime,db=b.signInActivity?.lastSuccessfulSignInDateTime||b.signInActivity?.lastSignInDateTime;av=da?new Date(da).getTime():0;bv=db?new Date(db).getTime():0;}
+    else if(userSortCol==='staleness'){av=stalenessScore(a).score;bv=stalenessScore(b).score;}
+    if(av<bv)return userSortDir==='asc'?-1:1;if(av>bv)return userSortDir==='asc'?1:-1;return 0;
+  });
+  document.getElementById('users-tbody').innerHTML=filtered.length?filtered.map(renderUserRow).join(''):'<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text4);">No users match your filter.</td></tr>';
+  document.getElementById('usr-stats').textContent=`Showing ${filtered.length} of ${allUsers.length} users`;
+  document.querySelectorAll('#users-table thead th').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.col===userSortCol)th.classList.add(userSortDir==='asc'?'sort-asc':'sort-desc');});
+  document.querySelectorAll('.redundancy-btn').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();const p=document.getElementById('rp-'+btn.dataset.uid);if(p){const open=p.classList.toggle('open');btn.style.background=open?'var(--warn-text)':'var(--stale-text)';}});});
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  buildSwatches();
+  const cur=document.documentElement.getAttribute('data-theme')||'blue-light';
+  document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.toggle('active',s.dataset.theme===cur));
+  const pickerBtn=document.getElementById('theme-picker-btn'),pickerMenu=document.getElementById('theme-picker-menu');
+  pickerBtn.addEventListener('click',e=>{e.stopPropagation();pickerMenu.classList.toggle('open');});
+  document.addEventListener('click',()=>pickerMenu.classList.remove('open'));
+  pickerMenu.addEventListener('click',e=>e.stopPropagation());
+  document.getElementById('cap-close-btn').addEventListener('click',()=>document.getElementById('capability-bar').classList.remove('visible'));
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active');}));
+  document.querySelectorAll('#users-table thead th').forEach(th=>th.addEventListener('click',()=>{if(th.dataset.col===userSortCol)userSortDir=userSortDir==='asc'?'desc':'asc';else{userSortCol=th.dataset.col;userSortDir=th.dataset.col==='staleness'||th.dataset.col==='lastSignIn'?'desc':'asc';}renderUsers();}));
+  document.getElementById('res-search').addEventListener('input',renderResources);
+  document.getElementById('res-type-filter').addEventListener('change',renderResources);
+  document.getElementById('usr-search').addEventListener('input',renderUsers);
+  document.getElementById('usr-status-filter').addEventListener('change',renderUsers);
+  document.getElementById('print-btn').addEventListener('click',()=>window.print());
+
+  document.getElementById('export-csv-btn').addEventListener('click',()=>{
+    const prefix=(document.getElementById('meta-tenant').textContent||'report').replace(/[^a-z0-9]/gi,'_'),date=new Date().toISOString().slice(0,10);
+    let uCsv='\uFEFFName,Email/UPN,Object ID,Type,Job Title,Department,Directory Roles,Status,Licenses,Redundant Licenses,Last Sign-in,Stale Likelihood\n';
+    allUsers.forEach(u=>{
+      const upn=u.userPrincipalName||u.mail||'',type=u._isSharedMailbox?'Shared Mailbox':'User';
+      const status=u._isSharedMailbox?'Shared Mailbox':u.accountEnabled===false?'Blocked':'Active';
+      const lics=(u._licenseNames||[]).join('; ')||'Unlicensed',reds=(u._redundancies||[]).map(r=>r.title).join('; ')||'None';
+      const roles=(u._roles||[]).join('; ')||'None',ls=u.signInActivity?.lastSuccessfulSignInDateTime||u.signInActivity?.lastSignInDateTime||'Never';
+      uCsv+=[u.displayName,upn,u.id,type,u.jobTitle||'',u.department||'',roles,status,lics,reds,ls,stalenessScore(u).label].map(csvEsc).join(',')+'\n';
+    });
+    let rCsv='\uFEFFName,Email,Type,Members,Owners,Last Activity\n';
+    allResources.forEach(r=>{const owners=(r.owners||[]).map(o=>o.displayName||o.userPrincipalName).join('; ');rCsv+=[r.displayName,r.mail,r.type,(r.members||[]).length,owners,r.lastActivity||'No data'].map(csvEsc).join(',')+'\n';});
+    downloadFile(uCsv,`M365-Users-${prefix}-${date}.csv`,'text/csv;charset=utf-8;');
+    downloadFile(rCsv,`M365-Resources-${prefix}-${date}.csv`,'text/csv;charset=utf-8;');
+  });
+
+  document.getElementById('export-html-btn').addEventListener('click',()=>{
+    const payload={account:document.getElementById('meta-user').textContent,tenantId:document.getElementById('meta-tenant').textContent,allResources,allUsers,degraded:degradedCapabilities};
+    const tag=document.getElementById('offline-payload');
+    tag.textContent='window.OFFLINE_DATA='+JSON.stringify(payload)+';';
+    const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    tag.textContent='';
+    const prefix=(document.getElementById('meta-tenant').textContent||'report').replace(/[^a-z0-9]/gi,'_');
+    downloadFile(html,`M365-Dashboard-${prefix}-${new Date().toISOString().slice(0,10)}.html`,'text/html;charset=utf-8;');
+  });
+
+  if(window.OFFLINE_DATA){
+    allResources=window.OFFLINE_DATA.allResources||[];
+    allUsers=(window.OFFLINE_DATA.allUsers||[]).map(u=>{u._redundancies=detectRedundancies(u);return u;});
+    document.getElementById('meta-user').textContent=window.OFFLINE_DATA.account||'Offline';
+    document.getElementById('meta-tenant').textContent=window.OFFLINE_DATA.tenantId||'Offline';
+    document.getElementById('signout-btn').style.display='none';
+    document.getElementById('export-html-btn').style.display='none';
+    if(window.OFFLINE_DATA.degraded?.length){
+      window.OFFLINE_DATA.degraded.forEach(d=>recordDegradation(d.id,d.label,d.detail));
+      renderCapabilityBar();
+    }
+    setLoading(false);show('report-screen');renderResources();renderUsers();return;
+  }
+  const ms=document.createElement('script');
+  ms.src='https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js';
+  ms.onload=()=>initMsal();
+  ms.onerror=()=>{setLoading(false);show('signin-screen');showError('Failed to load authentication library.');};
+  document.head.appendChild(ms);
+});
+
+// ── MSAL + Graph ─────────────────────────────────────────────────────────────
+function initMsal(){
+  const redirectUri=window.location.href.split('?')[0].split('#')[0];
+  const msalInstance=new msal.PublicClientApplication({
+    auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/organizations',redirectUri},
+    cache:{cacheLocation:'localStorage'}
+  });
+
+  async function gAll(token,url,headers={}){
+    let results=[],next=url;
+    while(next){
+      const r=await fetch(next,{headers:{Authorization:'Bearer '+token,...headers}});
+      if(!r.ok)throw new Error(r.status);
+      const p=await r.json();if(p.value)results=results.concat(p.value);next=p['@odata.nextLink']||null;
+    }
+    return results;
+  }
+  async function gCsv(token,url){const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});if(!r.ok)return null;return r.text();}
+
+  async function runReport(account){
+    setLoading(true,'Loading...');
+    document.getElementById('meta-user').textContent=account.username;
+    document.getElementById('meta-tenant').textContent='Tenant: '+account.tenantId;
+    document.getElementById('signout-btn').style.display='inline-flex';
+
+    let token;
+    try{token=(await msalInstance.acquireTokenSilent({scopes:SCOPES,account})).accessToken;}
+    catch{msalInstance.loginRedirect({scopes:SCOPES,loginHint:account.username});return;}
+
+    try{
+      // ── 1. Users: try rich (signInActivity) first, fall back if 403 ────────
+      setLoading(true,'Fetching users...');
+      let rawUsers,signInAvailable=true;
+      try{
+        rawUsers=await gAll(token,
+          'https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,signInActivity,userType,jobTitle,department&$top=999',
+          {'ConsistencyLevel':'eventual'});
+      }catch(e){
+        if(String(e.message).includes('403')){
+          signInAvailable=false;
+          recordDegradation(
+            'signInActivity',
+            'Last Sign-in dates unavailable',
+            'This tenant does not have Entra ID P1 or P2 licensing, which is required to read signInActivity. Sign-in dates and stale account detection are disabled.'
+          );
+          rawUsers=await gAll(token,
+            'https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,userType,jobTitle,department&$top=999');
+        }else{throw e;}
+      }
+
+      // ── 2. Groups + Teams ───────────────────────────────────────────────────
+      setLoading(true,'Fetching groups...');
+      const [groups,teamsRaw]=await Promise.all([
+        gAll(token,'https://graph.microsoft.com/v1.0/groups?$select=id,displayName,mail,mailEnabled,securityEnabled,groupTypes,description&$top=999'),
+        gAll(token,"https://graph.microsoft.com/v1.0/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id&$top=999")
+      ]);
+      const teamsSet=new Set(teamsRaw.map(t=>t.id));
+
+      // ── 3. Directory roles: fail-safe ────────────────────────────────────
+      setLoading(true,'Fetching admin roles...');
+      const userRoleMap={};
+      try{
+        const roles=await gAll(token,'https://graph.microsoft.com/v1.0/directoryRoles?$select=id,displayName');
+        await Promise.all(roles.map(async r=>{
+          try{
+            const members=await gAll(token,`https://graph.microsoft.com/v1.0/directoryRoles/${r.id}/members?$select=id`);
+            members.forEach(m=>{if(!userRoleMap[m.id])userRoleMap[m.id]=[];userRoleMap[m.id].push(r.displayName);});
+          }catch{}
+        }));
+      }catch(e){
+        if(String(e.message).includes('403')){
+          recordDegradation(
+            'directoryRoles',
+            'Admin role assignments unavailable',
+            'Directory role enumeration was blocked (403). Admin consent for Directory.Read.All may not have been granted. Role pills will not appear on user entries.'
+          );
+        }
+      }
+
+      // ── 4. Group activity report: fail-safe ─────────────────────────────
+      setLoading(true,'Fetching activity data...');
+      const activityMap={};
+      try{
+        const csv=await gCsv(token,"https://graph.microsoft.com/v1.0/reports/getOffice365GroupsActivityDetail(period='D180')");
+        if(csv){
+          const lines=csv.split('\n'),hdr=lines[0].split(',');
+          const ii=hdr.findIndex(h=>h.replace(/"/g,'').trim()==='Group Id');
+          const li=hdr.findIndex(h=>h.replace(/"/g,'').trim()==='Last Activity Date');
+          for(let i=1;i<lines.length;i++){const c=lines[i].split(',');const gid=(c[ii]||'').replace(/"/g,'').trim();const lad=(c[li]||'').replace(/"/g,'').trim();if(gid)activityMap[gid]=lad||null;}
+        }
+      }catch(e){
+        if(String(e.message).includes('403')){
+          recordDegradation(
+            'groupActivity',
+            'Group activity dates unavailable',
+            'The Groups activity report could not be retrieved (403). Last activity chips on resource cards will show "No activity data". Ensure the signed-in account has the Reports Reader role.'
+          );
+        }
+      }
+
+      // ── 5. Per-group members + owners ───────────────────────────────────
+      const resources=[];
+      for(let i=0;i<groups.length;i++){
+        const g=groups[i];setLoading(true,`Fetching members (${i+1}/${groups.length})...`);
+        let members=[],owners=[];
+        try{members=await gAll(token,`https://graph.microsoft.com/v1.0/groups/${g.id}/members/microsoft.graph.user?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses&$top=999`);}catch{}
+        try{owners=await gAll(token,`https://graph.microsoft.com/v1.0/groups/${g.id}/owners/microsoft.graph.user?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses&$top=999`);}catch{}
+        const type=teamsSet.has(g.id)?'Teams-enabled Group':(g.groupTypes||[]).includes('Unified')?'M365 Group':(!!g.mailEnabled&&!!g.securityEnabled)?'Mail-enabled Security':g.mailEnabled?'Distribution List':g.securityEnabled?'Security Group':'Group';
+        resources.push({id:g.id,displayName:g.displayName,mail:g.mail,description:g.description,type,lastActivity:activityMap[g.id]??null,members,owners});
+      }
+
+      // ── 6. Bake users, infer shared mailboxes ───────────────────────────
+      rawUsers.forEach(u=>{
+        u._roles=userRoleMap[u.id]||[];
+        if(inferSharedMailbox(u)){
+          u._isSharedMailbox=true;
+          resources.push({id:u.id,displayName:u.displayName,mail:u.mail||u.userPrincipalName,description:'Shared Mailbox (inferred)',type:'Shared Mailbox',lastActivity:null,members:[],owners:[],delegatesNote:true});
+        }
+      });
+
+      allResources=resources;
+      allUsers=rawUsers.map(bakeUserLicenses);
+
+      // ── 7. Render + show capability notices if any ──────────────────────
+      renderCapabilityBar();
+      setLoading(false);show('report-screen');renderResources();renderUsers();
+
+    }catch(e){setLoading(false);show('signin-screen');showError('Report failed: '+(e.message||e));}
+  }
+
+  msalInstance.handleRedirectPromise()
+    .then(r=>{
+      if(r&&r.account)runReport(r.account);
+      else{const a=msalInstance.getAllAccounts();if(a.length)runReport(a[0]);else{setLoading(false);show('signin-screen');}}
+    })
+    .catch(e=>{setLoading(false);show('signin-screen');showError(e.message||'Authentication error');});
+
+  document.getElementById('signin-btn').addEventListener('click',()=>msalInstance.loginRedirect({scopes:SCOPES,prompt:'select_account'}));
+  document.getElementById('signout-btn').addEventListener('click',()=>msalInstance.logoutRedirect({postLogoutRedirectUri:redirectUri}));
+}
+</script>
+</body>
+</html>

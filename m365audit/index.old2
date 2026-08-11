@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M365 Audit Report</title>
+  <script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; color: #1a1a1a; background: #f0f2f5; }
+    #shell { max-width: 1280px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ── Loading ── */
+    #loading-overlay {
+      position: fixed; inset: 0; background: rgba(255,255,255,.93);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 999; font-size: 14px; color: #333;
+    }
+    .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #0078d4; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-overlay.hidden { display: none; }
+
+    /* ── Sign-in ── */
+    #signin-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 20px; text-align: center; }
+    #signin-screen h1 { font-size: 22px; font-weight: 600; }
+    #signin-screen p  { color: #555; max-width: 440px; line-height: 1.6; }
+    #error-banner { background: #fdf3f4; border: 1px solid #f1a9ae; border-radius: 6px; padding: 12px 16px; color: #c50f1f; font-size: 12px; margin-top: 8px; display: none; max-width: 440px; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-primary   { background: #0078d4; color: #fff; }
+    .btn-primary:hover   { background: #006cbd; }
+    .btn-secondary { background: #fff; color: #0078d4; border: 1px solid #0078d4; }
+    .btn-secondary:hover { background: #f0f6fd; }
+
+    /* ── Report header ── */
+    #report-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+    #report-header h1 { font-size: 18px; font-weight: 700; flex: 1; min-width: 200px; }
+    .meta-chip { font-size: 11px; color: #555; background: #e8f0fb; border-radius: 4px; padding: 3px 8px; white-space: nowrap; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #dde1e7; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 10px 22px; border: none; background: none; font-size: 13px; font-weight: 600;
+      color: #666; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: #0078d4; }
+    .tab-btn.active { color: #0078d4; border-bottom-color: #0078d4; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Filter bar ── */
+    .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar input[type=search] { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 220px; }
+    .filter-bar select { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; }
+    .stats-label { font-size: 12px; color: #666; margin-left: auto; }
+
+    /* ── Resource cards ── */
+    .resource-card { background: #fff; border: 1px solid #dde1e7; border-radius: 8px; margin-bottom: 16px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+    .resource-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #eef0f3; background: #fafbfc; flex-wrap: wrap; }
+    .resource-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; flex-shrink: 0; color: #333; }
+    .icon-m365{background:#e9f2ff;} .icon-teams{background:#ede7f6;} .icon-shared{background:#fff3e0;}
+    .icon-distrib{background:#e8f5e9;} .icon-security{background:#fce4ec;} .icon-mailsec{background:#fff8e1;}
+    .resource-title { font-size: 14px; font-weight: 700; }
+    .resource-email { font-size: 11px; color: #666; margin-top: 1px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .badge-m365{background:#cfe4ff;color:#0047b3;} .badge-teams{background:#ede7f6;color:#4a148c;}
+    .badge-shared{background:#fff3e0;color:#e65100;} .badge-distrib{background:#e8f5e9;color:#1b5e20;}
+    .badge-security{background:#fce4ec;color:#880e4f;} .badge-mailsec{background:#fff8e1;color:#f57f17;}
+    .activity-chip { margin-left: auto; font-size: 11px; color: #555; background: #f0f2f5; border-radius: 4px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0; }
+    .activity-chip.stale  { color: #c50f1f; background: #fdf3f4; }
+    .activity-chip.recent { color: #107c10; background: #dff6dd; }
+    .resource-body { padding: 12px 16px; }
+    .person-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; margin-top: 8px; }
+    .person-chip { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 5px; background: #f6f8fa; font-size: 12px; border: 1px solid #e8eaed; }
+    .person-chip.owner-chip { background: #fff9e6; border-color: #f0d080; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .person-info { overflow: hidden; flex: 1; }
+    .person-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .person-upn  { font-size: 10px; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status-flag { font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
+    .status-blocked    { background: #fdf3f4; color: #c50f1f; border: 1px solid #f1a9ae; }
+    .status-unlicensed { background: #f0f2f5; color: #666; border: 1px solid #ccc; }
+    .owner-star { font-size: 10px; color: #c48a00; font-weight: bold; flex-shrink: 0; }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #777; margin-top: 10px; margin-bottom: 4px; }
+    .section-label:first-child { margin-top: 0; }
+    .empty-note { font-size: 12px; color: #aaa; font-style: italic; }
+
+    /* ── Users table ── */
+    .users-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #dde1e7; background: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      background: #fafbfc; padding: 10px 12px; text-align: left;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+      color: #555; border-bottom: 2px solid #dde1e7; white-space: nowrap;
+      cursor: pointer; user-select: none;
+    }
+    thead th:hover { background: #f0f2f5; }
+    thead th .sort-arrow { margin-left: 4px; color: #aaa; font-size: 10px; }
+    thead th.sort-asc  .sort-arrow::after { content: ' ▲'; color: #0078d4; }
+    thead th.sort-desc .sort-arrow::after { content: ' ▼'; color: #0078d4; }
+    thead th:not(.sort-asc):not(.sort-desc) .sort-arrow::after { content: ' ⇅'; }
+    tbody tr { border-bottom: 1px solid #f0f2f5; transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8f9fb; }
+    tbody td { padding: 9px 12px; vertical-align: middle; }
+    .user-name-cell { display: flex; align-items: center; gap: 8px; }
+    .user-name-text { font-weight: 600; }
+    .user-upn-text  { font-size: 11px; color: #777; }
+    .license-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .license-pill { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: #e8f0fb; color: #0047b3; border: 1px solid #c5d9f5; white-space: nowrap; }
+    .license-pill.unlicensed { background: #f0f2f5; color: #666; border-color: #ccc; }
+    .signin-cell { white-space: nowrap; }
+    .signin-cell.never  { color: #aaa; font-style: italic; }
+    .signin-cell.stale  { color: #c50f1f; }
+    .signin-cell.recent { color: #107c10; }
+    .stale-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+    .stale-bar-bg { flex: 1; height: 6px; background: #e8eaed; border-radius: 3px; overflow: hidden; }
+    .stale-bar-fill { height: 100%; border-radius: 3px; }
+    .stale-low    .stale-bar-fill { background: #107c10; }
+    .stale-medium .stale-bar-fill { background: #ca5010; }
+    .stale-high   .stale-bar-fill { background: #c50f1f; }
+    .stale-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
+    .stale-low    .stale-label { color: #107c10; }
+    .stale-medium .stale-label { color: #ca5010; }
+    .stale-high   .stale-label { color: #c50f1f; }
+    .id-cell { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 10px; color: #888; }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; }
+      #shell { padding: 0; max-width: 100%; }
+      #report-header .btn { display: none !important; }
+      .tab-bar { display: none !important; }
+      .tab-panel { display: block !important; }
+      .filter-bar { display: none !important; }
+      .resource-card { border: 1px solid #ccc; margin-bottom: 12px; }
+      .resource-card-header { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    .hidden { display: none !important; }
+    .mt8 { margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div id="shell">
+
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-msg">Initializing...</div>
+  </div>
+
+  <div id="signin-screen" class="hidden">
+    <h1>M365 Audit Report</h1>
+    <p>Sign in as a Global Admin to audit all groups, shared mailboxes, and users in your tenant.</p>
+    <button class="btn btn-primary" id="signin-btn">Sign in with Microsoft</button>
+    <div id="error-banner"></div>
+  </div>
+
+  <div id="report-screen" class="hidden">
+    <div id="report-header">
+      <h1>M365 Audit Report</h1>
+      <span id="meta-user"   class="meta-chip"></span>
+      <span id="meta-tenant" class="meta-chip"></span>
+      <button class="btn btn-secondary" id="signout-btn">Sign out</button>
+      <button class="btn btn-primary"   id="print-btn">Print</button>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="resources-panel">Resources</button>
+      <button class="tab-btn"        data-tab="users-panel">Users</button>
+    </div>
+
+    <div id="resources-panel" class="tab-panel active">
+      <div class="filter-bar">
+        <input type="search" id="res-search" placeholder="Search by name or email..."/>
+        <select id="res-type-filter">
+          <option value="">All types</option>
+          <option value="Teams-enabled Group">Teams-enabled</option>
+          <option value="M365 Group">M365 Groups</option>
+          <option value="Shared Mailbox">Shared Mailboxes</option>
+          <option value="Distribution List">Distribution Lists</option>
+          <option value="Mail-enabled Security">Mail-enabled Security</option>
+          <option value="Security Group">Security Groups</option>
+        </select>
+        <span id="res-stats" class="stats-label"></span>
+      </div>
+      <div id="cards-container"></div>
+    </div>
+
+    <div id="users-panel" class="tab-panel">
+      <div class="filter-bar">
+        <input type="search" id="usr-search" placeholder="Search by name, email, or ID..."/>
+        <select id="usr-status-filter">
+          <option value="">All users</option>
+          <option value="blocked">Sign-in blocked</option>
+          <option value="unlicensed">Unlicensed</option>
+          <option value="stale-high">High stale likelihood</option>
+          <option value="stale-medium">Medium stale likelihood</option>
+          <option value="never-signed-in">Never signed in</option>
+        </select>
+        <span id="usr-stats" class="stats-label"></span>
+      </div>
+      <div class="users-table-wrap">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th data-col="displayName">Name <span class="sort-arrow"></span></th>
+              <th data-col="id">Object ID <span class="sort-arrow"></span></th>
+              <th data-col="accountEnabled">Status <span class="sort-arrow"></span></th>
+              <th data-col="licenses">Licenses <span class="sort-arrow"></span></th>
+              <th data-col="lastSignIn">Last Sign-in <span class="sort-arrow"></span></th>
+              <th data-col="staleness">Stale Likelihood <span class="sort-arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const CLIENT_ID = 'd6d7b4b9-2826-4940-b6c2-5c3d9bc1b7fe';
+const SCOPES = [
+  'Group.Read.All',
+  'GroupMember.Read.All',
+  'User.Read.All',
+  'Reports.Read.All',
+  'MailboxSettings.Read',
+  'Team.ReadBasic.All',
+  'AuditLog.Read.All'
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LICENSE SKU LOOKUP
+// ─────────────────────────────────────────────────────────────────────────────
+const SKU_NAMES = {
+  'SPE_E3':'Microsoft 365 E3','SPE_E5':'Microsoft 365 E5',
+  'SPB':'M365 Business Basic','O365_BUSINESS_ESSENTIALS':'M365 Business Basic',
+  'SMB_BUSINESS_ESSENTIALS':'M365 Business Basic','O365_BUSINESS_PREMIUM':'M365 Business Standard',
+  'SMB_BUSINESS_PREMIUM':'M365 Business Standard','SPP':'M365 Business Premium',
+  'ENTERPRISEPREMIUM':'Office 365 E5','ENTERPRISEPACK':'Office 365 E3',
+  'STANDARDPACK':'Office 365 E1','STANDARDWOFFPACK':'Office 365 E2',
+  'DESKLESSPACK':'Office 365 F1','DEVELOPERPACK':'Office 365 E3 Dev',
+  'DEVELOPERPACK_E5':'Microsoft 365 E5 Dev','O365_BUSINESS':'Microsoft 365 Apps for Business',
+  'MCOMEETADV':'Teams Audio Conferencing','MCOEV':'Teams Phone Standard',
+  'MCOPSTN1':'Teams Domestic Calling','MCOPSTN2':'Teams Domestic & Intl Calling',
+  'PROJECTPROFESSIONAL':'Project Plan 3','PROJECTPREMIUM':'Project Plan 5',
+  'VISIOCLIENT':'Visio Plan 2','VISIOONLINE_PLAN1':'Visio Plan 1',
+  'EMS':'EMS E3','EMSPREMIUM':'EMS E5','AAD_PREMIUM':'Entra ID P1',
+  'AAD_PREMIUM_P2':'Entra ID P2','INTUNE_A':'Intune','POWER_BI_PRO':'Power BI Pro',
+  'POWER_BI_PREMIUM_USER':'Power BI Premium Per User','POWERAPPS_PER_USER':'Power Apps Per User',
+  'FLOW_PER_USER':'Power Automate Per User','WIN10_PRO_ENT_SUB':'Windows Enterprise E3',
+  'WIN_ENT_E5':'Windows Enterprise E5','IDENTITY_THREAT_PROTECTION':'M365 E5 Security',
+  'INFORMATION_PROTECTION_COMPLIANCE':'M365 E5 Compliance',
+};
+let skuIdToName = {};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MSAL v2 SETUP
+// ─────────────────────────────────────────────────────────────────────────────
+const msalConfig = {
+  auth: {
+    clientId: CLIENT_ID,
+    authority: 'https://login.microsoftonline.com/organizations',
+    redirectUri: window.location.href.split('?')[0].split('#')[0],
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+async function init() {
+  // v2 does NOT use initialize() — omit it entirely
+  try {
+    const redirectResult = await msalInstance.handleRedirectPromise();
+    if (redirectResult?.account) {
+      await runReport(redirectResult.account);
+      return;
+    }
+  } catch (e) { /* ignore popup-related errors on load */ }
+
+  // If this window is a popup returning auth results, do nothing
+  if (window.opener && window.opener !== window) return;
+
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    await runReport(accounts[0]);
+    return;
+  }
+
+  setLoading(false);
+  show('signin-screen');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function show(id) {
+  ['signin-screen','report-screen'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s !== id)
+  );
+}
+function setLoading(on, msg) {
+  document.getElementById('loading-overlay').classList.toggle('hidden', !on);
+  if (msg) document.getElementById('loading-msg').textContent = msg;
+}
+function showError(msg) {
+  const b = document.getElementById('error-banner');
+  b.style.display = 'block';
+  b.textContent = 'Error: ' + msg;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIGN IN / OUT
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('signin-btn').addEventListener('click', async () => {
+  try {
+    const result = await msalInstance.loginPopup({ scopes: SCOPES, prompt: 'consent' });
+    if (result?.account) await runReport(result.account);
+  } catch (err) {
+    if (err.errorCode !== 'user_cancelled') showError(err.message || 'Sign-in failed.');
+  }
+});
+
+document.getElementById('signout-btn').addEventListener('click', () => {
+  try {
+    msalInstance.logoutPopup().then(() => show('signin-screen'));
+  } catch {
+    msalInstance.clearCache();
+    show('signin-screen');
+  }
+});
+
+document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRAPH HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+async function getToken(account) {
+  try { return (await msalInstance.acquireTokenSilent({ scopes: SCOPES, account })).accessToken; }
+  catch { return (await msalInstance.acquireTokenPopup({ scopes: SCOPES, account })).accessToken; }
+}
+async function graphGet(token, url, extraHeaders = {}) {
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token, ...extraHeaders } });
+  if (!res.ok) throw new Error(`Graph ${res.status}: ${url}`);
+  return res.json();
+}
+async function graphGetAll(token, url, extraHeaders = {}) {
+  let results = [], next = url;
+  while (next) {
+    const res = await fetch(next, { headers: { Authorization: 'Bearer ' + token, ...extraHeaders } });
+    if (!res.ok) throw new Error(`Graph ${res.status}: ${next}`);
+    const page = await res.json();
+    if (page.value) results = results.concat(page.value);
+    next = page['@odata.nextLink'] || null;
+  }
+  return results;
+}
+async function graphGetCsv(token, url) {
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!res.ok) return null;
+  return res.text();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STALE LIKELIHOOD SCORING
+// ─────────────────────────────────────────────────────────────────────────────
+function stalenessScore(user) {
+  let score = 0;
+  const reasons = [];
+  if (user.accountEnabled === false) { score += 35; reasons.push('Sign-in blocked'); }
+  if (!(user.assignedLicenses && user.assignedLicenses.length > 0)) { score += 20; reasons.push('No licenses'); }
+  const lastSignIn = user.signInActivity?.lastSuccessfulSignInDateTime
+                  || user.signInActivity?.lastSignInDateTime;
+  if (!lastSignIn) {
+    score += 30; reasons.push('Never signed in');
+  } else {
+    const days = Math.floor((Date.now() - new Date(lastSignIn).getTime()) / 86400000);
+    if (days > 180)      { score += 25; reasons.push(`No sign-in in ${days}d`); }
+    else if (days > 90)  { score += 15; reasons.push(`No sign-in in ${days}d`); }
+    else if (days > 30)  { score += 5;  reasons.push(`No sign-in in ${days}d`); }
+  }
+  score = Math.min(score, 100);
+  const tier  = score >= 60 ? 'high'   : score >= 30 ? 'medium' : 'low';
+  const label = score >= 60 ? 'High'   : score >= 30 ? 'Medium' : 'Low';
+  return { score, tier, label, reasons };
+}
+
+function resolveLicenseName(skuId) {
+  return skuIdToName[skuId] || skuId.slice(0, 8) + '...';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN REPORT RUNNER
+// ─────────────────────────────────────────────────────────────────────────────
+let allResources = [];
+let allUsers = [];
+let userSortCol = 'staleness';
+let userSortDir = 'desc';
+
+async function runReport(account) {
+  setLoading(true, 'Signing in...');
+  document.getElementById('meta-user').textContent   = account.username;
+  document.getElementById('meta-tenant').textContent = 'Tenant: ' + account.tenantId;
+  const token = await getToken(account);
+
+  // License catalog
+  setLoading(true, 'Fetching license catalog...');
+  try {
+    const skus = await graphGetAll(token, 'https://graph.microsoft.com/v1.0/subscribedSkus?$select=skuId,skuPartNumber');
+    for (const sku of skus) skuIdToName[sku.skuId] = SKU_NAMES[sku.skuPartNumber] || sku.skuPartNumber;
+  } catch { }
+
+  // Groups
+  setLoading(true, 'Fetching groups...');
+  const groups = await graphGetAll(token,
+    'https://graph.microsoft.com/v1.0/groups?$select=id,displayName,mail,mailEnabled,securityEnabled,groupTypes,description,createdDateTime&$top=999'
+  );
+
+  setLoading(true, 'Identifying Teams groups...');
+  const teamsGroups = await graphGetAll(token,
+    "https://graph.microsoft.com/v1.0/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id&$top=999"
+  );
+  const teamsSet = new Set(teamsGroups.map(t => t.id));
+
+  // Activity report
+  setLoading(true, 'Fetching activity data...');
+  const activityMap = {};
+  try {
+    const csv = await graphGetCsv(token, "https://graph.microsoft.com/v1.0/reports/getOffice365GroupsActivityDetail(period='D180')");
+    if (csv) {
+      const lines = csv.split('\n');
+      const header = lines[0].split(',');
+      const idIdx  = header.findIndex(h => h.replace(/"/g,'').trim() === 'Group Id');
+      const ladIdx = header.findIndex(h => h.replace(/"/g,'').trim() === 'Last Activity Date');
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        const gid  = (cols[idIdx]||'').replace(/"/g,'').trim();
+        const lad  = (cols[ladIdx]||'').replace(/"/g,'').trim();
+        if (gid) activityMap[gid] = lad || null;
+      }
+    }
+  } catch { }
+
+  // Members + owners
+  const resources = [];
+  for (let i = 0; i < groups.length; i++) {
+    const g = groups[i];
+    setLoading(true, `Fetching members (${i+1}/${groups.length}): ${g.displayName}`);
+    let members = [], owners = [];
+    try { members = await graphGetAll(token, `https://graph.microsoft.com/v1.0/groups/${g.id}/members/microsoft.graph.user?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses&$top=999`); } catch { }
+    try { owners  = await graphGetAll(token, `https://graph.microsoft.com/v1.0/groups/${g.id}/owners/microsoft.graph.user?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses&$top=999`); } catch { }
+
+    const isUnified  = (g.groupTypes||[]).includes('Unified');
+    const isTeam     = teamsSet.has(g.id);
+    const isMail     = !!g.mailEnabled;
+    const isSecurity = !!g.securityEnabled;
+    const type = isTeam ? 'Teams-enabled Group' : isUnified ? 'M365 Group'
+      : (isMail && isSecurity) ? 'Mail-enabled Security'
+      : isMail ? 'Distribution List' : isSecurity ? 'Security Group' : 'Group';
+
+    resources.push({ id: g.id, displayName: g.displayName, mail: g.mail,
+      description: g.description, type, lastActivity: activityMap[g.id] ?? null, members, owners });
+  }
+
+  // Shared mailboxes
+  setLoading(true, 'Scanning for shared mailboxes...');
+  try {
+    const unlicensed = await graphGetAll(token,
+      'https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses&$filter=assignedLicenses/$count eq 0&$count=true&$top=999',
+      { 'ConsistencyLevel': 'eventual' }
+    );
+    for (const u of unlicensed) {
+      try {
+        const mb = await graphGet(token, `https://graph.microsoft.com/v1.0/users/${u.id}/mailboxSettings`);
+        if (mb.userPurpose === 'shared') {
+          resources.push({ id: u.id, displayName: u.displayName, mail: u.mail,
+            description: 'Shared Mailbox', type: 'Shared Mailbox',
+            lastActivity: null, members: [], owners: [], delegatesNote: true });
+        }
+      } catch { }
+    }
+  } catch { }
+
+  allResources = resources;
+
+  // Users
+  setLoading(true, 'Fetching users and sign-in data...');
+  try {
+    allUsers = await graphGetAll(token,
+      'https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,signInActivity,userType,createdDateTime&$top=999',
+      { 'ConsistencyLevel': 'eventual' }
+    );
+  } catch {
+    try {
+      allUsers = await graphGetAll(token,
+        'https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,userType,createdDateTime&$top=999'
+      );
+    } catch { }
+  }
+
+  setLoading(false);
+  show('report-screen');
+  renderResources();
+  renderUsers();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED RENDER UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
+function daysSince(d) {
+  if (!d) return null;
+  const ms = Date.now() - new Date(d).getTime();
+  return isNaN(ms) ? null : Math.floor(ms / 86400000);
+}
+function initials(n) {
+  if (!n) return '?';
+  const p = n.trim().split(/\s+/);
+  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0]+p[p.length-1][0]).toUpperCase();
+}
+function avatarColor(n) {
+  const pal = ['#0078d4','#107c10','#c50f1f','#8764b8','#ca5010','#038387'];
+  let h = 0; for (const c of (n||'')) h = (h*31+c.charCodeAt(0))&0xffffffff;
+  return pal[Math.abs(h)%pal.length];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESOURCES TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function typeStyle(t) {
+  return ({
+    'Teams-enabled Group':   {badge:'badge-teams',    icon:'icon-teams',    txt:'T'},
+    'M365 Group':            {badge:'badge-m365',     icon:'icon-m365',     txt:'M'},
+    'Shared Mailbox':        {badge:'badge-shared',   icon:'icon-shared',   txt:'S'},
+    'Distribution List':     {badge:'badge-distrib',  icon:'icon-distrib',  txt:'D'},
+    'Mail-enabled Security': {badge:'badge-mailsec',  icon:'icon-mailsec',  txt:'MS'},
+    'Security Group':        {badge:'badge-security', icon:'icon-security', txt:'SG'},
+  })[t] || {badge:'badge-m365', icon:'icon-m365', txt:'G'};
+}
+function activityChipHtml(la) {
+  const days = daysSince(la);
+  if (days === null) return '<span class="activity-chip">No activity data</span>';
+  const cls = days > 90 ? 'stale' : days < 14 ? 'recent' : '';
+  const lbl = days === 0 ? 'Active today' : days === 1 ? 'Active yesterday' : `Last active ${days}d ago`;
+  return `<span class="activity-chip ${cls}" title="Last activity: ${esc(la)}">${lbl}</span>`;
+}
+function personChipHtml(p, isOwner) {
+  const upn = p.userPrincipalName || p.mail || '';
+  let flags = '';
+  if (p.accountEnabled === false) flags += '<span class="status-flag status-blocked">Blocked</span>';
+  if (p.assignedLicenses && p.assignedLicenses.length === 0) flags += '<span class="status-flag status-unlicensed">Unlicensed</span>';
+  return `<div class="person-chip${isOwner?' owner-chip':''}">
+    <div class="avatar" style="background:${avatarColor(p.displayName)}">${initials(p.displayName)}</div>
+    <div class="person-info">
+      <div class="person-name">${esc(p.displayName||upn)} ${flags}</div>
+      <div class="person-upn">${esc(upn)}</div>
+    </div>
+    ${isOwner ? '<span class="owner-star">(Owner)</span>' : ''}
+  </div>`;
+}
+function renderCard(res) {
+  const style = typeStyle(res.type);
+  const ownerIds = new Set((res.owners||[]).map(o => o.id));
+  const nonOwnerMembers = (res.members||[]).filter(m => !ownerIds.has(m.id));
+  const ownersHtml  = (res.owners||[]).length
+    ? res.owners.map(p => personChipHtml(p, true)).join('')
+    : '<span class="empty-note">No owners listed</span>';
+  const membersHtml = nonOwnerMembers.length
+    ? nonOwnerMembers.map(p => personChipHtml(p, false)).join('')
+    : res.delegatesNote
+      ? '<span class="empty-note">Full Access delegates not exposed by Graph API. Check Exchange Admin Center.</span>'
+      : '<span class="empty-note">No members</span>';
+  return `<div class="resource-card">
+    <div class="resource-card-header">
+      <div class="resource-icon ${style.icon}">${style.txt}</div>
+      <div>
+        <div class="resource-title">${esc(res.displayName)}</div>
+        <div class="resource-email">${esc(res.mail||'')}${res.description?' - '+esc(res.description.slice(0,80)):''}</div>
+      </div>
+      <span class="badge ${style.badge}">${esc(res.type)}</span>
+      <span style="font-size:11px;color:#888;">(${(res.members||[]).length})</span>
+      ${activityChipHtml(res.lastActivity)}
+    </div>
+    <div class="resource-body">
+      <div class="section-label">Owners</div>
+      <div class="person-grid">${ownersHtml}</div>
+      <div class="section-label mt8">Members</div>
+      <div class="person-grid">${membersHtml}</div>
+    </div>
+  </div>`;
+}
+function renderResources() {
+  const search = (document.getElementById('res-search').value||'').toLowerCase();
+  const tf = document.getElementById('res-type-filter').value;
+  const typeOrder = ['Teams-enabled Group','M365 Group','Shared Mailbox','Distribution List','Mail-enabled Security','Security Group','Group'];
+  const filtered = allResources.filter(r => {
+    if (tf && r.type !== tf) return false;
+    if (search && !(r.displayName||'').toLowerCase().includes(search) && !(r.mail||'').toLowerCase().includes(search)) return false;
+    return true;
+  }).sort((a,b) => {
+    const d = typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+    return d !== 0 ? d : (a.displayName||'').localeCompare(b.displayName||'');
+  });
+  document.getElementById('cards-container').innerHTML = filtered.length
+    ? filtered.map(renderCard).join('')
+    : '<p style="color:#888;text-align:center;padding:40px;">No resources match your filter.</p>';
+  document.getElementById('res-stats').textContent = `Showing ${filtered.length} of ${allResources.length} resources`;
+}
+document.getElementById('res-search').addEventListener('input', renderResources);
+document.getElementById('res-type-filter').addEventListener('change', renderResources);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USERS TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function formatSignInDate(user) {
+  const dt = user.signInActivity?.lastSuccessfulSignInDateTime
+          || user.signInActivity?.lastSignInDateTime;
+  if (!dt) return { label: 'Never', cls: 'never', days: null, iso: null };
+  const days  = daysSince(dt);
+  const label = new Date(dt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  return { label: `${label} (${days}d ago)`, cls: days > 90 ? 'stale' : days < 14 ? 'recent' : '', days, iso: dt };
+}
+function renderUserRow(user) {
+  const signIn    = formatSignInDate(user);
+  const stale     = stalenessScore(user);
+  const upn       = user.userPrincipalName || user.mail || '';
+  const isBlocked = user.accountEnabled === false;
+  const licenses  = user.assignedLicenses || [];
+  const statusHtml   = isBlocked
+    ? '<span class="status-flag status-blocked">Blocked</span>'
+    : '<span style="color:#107c10;font-size:11px;font-weight:600;">Active</span>';
+  const licensesHtml = licenses.length === 0
+    ? '<span class="license-pill unlicensed">Unlicensed</span>'
+    : licenses.map(l => `<span class="license-pill" title="${esc(l.skuId)}">${esc(resolveLicenseName(l.skuId))}</span>`).join('');
+  return `<tr>
+    <td><div class="user-name-cell">
+      <div class="avatar" style="background:${avatarColor(user.displayName)}">${initials(user.displayName)}</div>
+      <div><div class="user-name-text">${esc(user.displayName||upn)}</div><div class="user-upn-text">${esc(upn)}</div></div>
+    </div></td>
+    <td class="id-cell" title="${esc(user.id)}">${esc(user.id)}</td>
+    <td>${statusHtml}</td>
+    <td><div class="license-pills">${licensesHtml}</div></td>
+    <td class="signin-cell ${signIn.cls}">${esc(signIn.label)}</td>
+    <td><div class="stale-bar-wrap stale-${stale.tier}" title="${esc(stale.reasons.join(', '))||'No concerns'}">
+      <div class="stale-bar-bg"><div class="stale-bar-fill" style="width:${stale.score}%"></div></div>
+      <span class="stale-label">${stale.label}</span>
+    </div></td>
+  </tr>`;
+}
+function renderUsers() {
+  const search     = (document.getElementById('usr-search').value||'').toLowerCase();
+  const statusFilt = document.getElementById('usr-status-filter').value;
+  let filtered = allUsers.filter(u => {
+    const upn = (u.userPrincipalName||u.mail||'').toLowerCase();
+    if (search && !(u.displayName||'').toLowerCase().includes(search) && !upn.includes(search) && !(u.id||'').includes(search)) return false;
+    if (statusFilt === 'blocked'        && u.accountEnabled !== false) return false;
+    if (statusFilt === 'unlicensed'     && (u.assignedLicenses||[]).length > 0) return false;
+    if (statusFilt === 'never-signed-in' && (u.signInActivity?.lastSignInDateTime || u.signInActivity?.lastSuccessfulSignInDateTime)) return false;
+    if (statusFilt === 'stale-high'     && stalenessScore(u).tier !== 'high') return false;
+    if (statusFilt === 'stale-medium'   && stalenessScore(u).tier !== 'medium') return false;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    let av, bv;
+    if      (userSortCol === 'displayName')    { av = (a.displayName||'').toLowerCase(); bv = (b.displayName||'').toLowerCase(); }
+    else if (userSortCol === 'id')             { av = a.id||''; bv = b.id||''; }
+    else if (userSortCol === 'accountEnabled') { av = a.accountEnabled===false?0:1; bv = b.accountEnabled===false?0:1; }
+    else if (userSortCol === 'licenses')       { av = (a.assignedLicenses||[]).length; bv = (b.assignedLicenses||[]).length; }
+    else if (userSortCol === 'lastSignIn') {
+      const da = a.signInActivity?.lastSuccessfulSignInDateTime||a.signInActivity?.lastSignInDateTime;
+      const db = b.signInActivity?.lastSuccessfulSignInDateTime||b.signInActivity?.lastSignInDateTime;
+      av = da ? new Date(da).getTime() : 0; bv = db ? new Date(db).getTime() : 0;
+    }
+    else if (userSortCol === 'staleness')      { av = stalenessScore(a).score; bv = stalenessScore(b).score; }
+    if (av < bv) return userSortDir === 'asc' ? -1 : 1;
+    if (av > bv) return userSortDir === 'asc' ?  1 : -1;
+    return 0;
+  });
+  document.getElementById('users-tbody').innerHTML = filtered.length
+    ? filtered.map(renderUserRow).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa;">No users match your filter.</td></tr>';
+  document.getElementById('usr-stats').textContent = `Showing ${filtered.length} of ${allUsers.length} users`;
+  document.querySelectorAll('#users-table thead th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col === userSortCol) th.classList.add(userSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+}
+document.querySelectorAll('#users-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    if (th.dataset.col === userSortCol) userSortDir = userSortDir === 'asc' ? 'desc' : 'asc';
+    else { userSortCol = th.dataset.col; userSortDir = th.dataset.col === 'staleness' || th.dataset.col === 'lastSignIn' ? 'desc' : 'asc'; }
+    renderUsers();
+  });
+});
+document.getElementById('usr-search').addEventListener('input', renderUsers);
+document.getElementById('usr-status-filter').addEventListener('change', renderUsers);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────────────────────────
+init().catch(err => {
+  setLoading(false);
+  show('signin-screen');
+  showError(err.message || 'Initialization failed.');
+});
+</script>
+</body>
+</html>
