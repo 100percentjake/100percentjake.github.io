@@ -7,7 +7,7 @@
 <title>100percentblog</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,600;1,700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;display=swap" rel="stylesheet">
 <!-- FOUC fix: apply saved theme before first paint -->
 <script>
   (function(){
@@ -20,20 +20,35 @@
 </script>
 <style>
 :root {
-  --bg: #f7f8fa;
-  --text: #222;
-  --card: #fff;
-  --accent: #333;
-  --header-bg: #333;
+  color-scheme: light;
+  --brand: #f68b1e;
+  --bg: #f5f1e9;
+  --text: #1d2a33;
+  --muted: #65717a;
+  --card: #fffdf9;
+  --accent: #a94700;
+  --accent-hover: #7d3500;
+  --on-accent: #fff;
+  --header-bg: #142b3a;
+  --border: #d8d2c7;
+  --soft-accent: #fff0df;
+  --shadow: rgba(20,43,58,0.10);
   --transition-speed: 0.2s;
 }
 
 [data-theme="dark"] {
-  --bg: #121212;
-  --text: #eee;
-  --card: #1e1e1e;
-  --accent: #007585;
-  --header-bg: #0a0a0a;
+  color-scheme: dark;
+  --bg: #0c151c;
+  --text: #e8edf0;
+  --muted: #a7b2b9;
+  --card: #14232d;
+  --accent: #ffad55;
+  --accent-hover: #ffc581;
+  --on-accent: #17232b;
+  --header-bg: #071016;
+  --border: #2d414e;
+  --soft-accent: #342619;
+  --shadow: rgba(0,0,0,0.28);
 }
 
 *, *::before, *::after {
@@ -55,7 +70,8 @@ header {
   background: var(--header-bg);
   color: #fff;
   padding: 1rem 2rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border-bottom: 3px solid var(--brand);
+  box-shadow: 0 4px 16px var(--shadow);
   position: fixed;
   top: 0;
   z-index: 10;
@@ -114,7 +130,8 @@ article {
   padding: 2rem;
   margin-bottom: 2rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 24px var(--shadow);
   opacity: 1;
   transition: opacity var(--transition-speed);
 }
@@ -136,6 +153,23 @@ article > p {
   margin-inline: auto;
 }
 
+h1, h2, h3, h4,
+button,
+.read-more {
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+
+article h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+article > p,
+footer small {
+  color: var(--muted);
+}
+
 .post-content h2,
 .post-content h3,
 .post-content h4 {
@@ -151,7 +185,7 @@ article > p {
   border-left: 4px solid var(--accent);
   margin: 1.5rem 0;
   padding: 0.25rem 1rem;
-  opacity: 0.9;
+  color: var(--muted);
 }
 
 .post-content code {
@@ -171,7 +205,7 @@ article > p {
 .post-content mark { background: #ffe58a; color: #222; }
 
 .callout {
-  background: rgba(0,117,133,0.09);
+  background: var(--soft-accent);
   border-left: 4px solid var(--accent);
   border-radius: 0 8px 8px 0;
   margin: 1.5rem 0;
@@ -185,6 +219,8 @@ article > p {
   margin-top: 1rem;
   color: var(--accent);
   font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
   text-decoration: none;
   transition: color 0.3s;
 }
@@ -197,13 +233,14 @@ article h2 a {
 }
 
 article h2 a:hover {
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
 /* Sidebar */
 #sidebarContainer {
   background: var(--card);
-  border-left: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid var(--border);
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -211,16 +248,26 @@ article h2 a:hover {
   max-height: calc(100vh - 6rem);
   overflow-y: auto;
   border-radius: 12px;
+  box-shadow: 0 6px 24px var(--shadow);
+}
+
+#sidebarContainer h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
 }
 
 .toggle-theme {
   cursor: pointer;
   background: var(--accent);
   border: none;
-  color: #fff;
+  color: var(--on-accent);
   padding: 0.5rem 0.9rem;
   border-radius: 6px;
   font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   transition: background 0.3s;
 }
 
@@ -234,7 +281,7 @@ article h2 a:hover {
 /* sidebar items rendered as buttons for a11y */
 #sidebar li {
   padding: 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border);
 }
 
 #sidebar li button {
@@ -243,7 +290,7 @@ article h2 a:hover {
   color: var(--text);
   cursor: pointer;
   padding: 0.3rem 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   text-align: left;
   width: 100%;
   transition: color 0.3s;
@@ -264,7 +311,8 @@ article h2 a:hover {
 footer.pagination {
   width: 100%;
   background: var(--card);
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px var(--shadow);
   padding: 1rem 0;
   display: flex;
   flex-direction: column;
@@ -279,13 +327,19 @@ footer.pagination {
 
 button {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   transition: background 0.3s;
+}
+
+button:not(:disabled):hover {
+  background: var(--accent-hover);
 }
 
 button:disabled {
@@ -295,7 +349,6 @@ button:disabled {
 
 footer small {
   font-size: 0.8rem;
-  color: #666;
 }
 
 /* Responsive */
@@ -305,8 +358,7 @@ footer small {
   }
   #sidebarContainer{
     max-height: none;
-    border-left:none;
-    border-top:1px solid rgba(0,0,0,0.1);
+    border:1px solid var(--border);
   }
 }
 
